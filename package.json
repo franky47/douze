@@ -2,7 +2,7 @@
   "name": "douze",
   "description": "Twelve factor app framework for Node.js written in Typescript",
   "version": "0.0.2",
-  "main": "./build/index.js",
+  "main": "dist/index.js",
   "license": "MIT",
   "author": {
     "name": "François Best",
@@ -21,7 +21,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build:clean": "rm -rf ./build",
+    "build:clean": "rm -rf ./dist",
     "build:ts": "tsc",
     "build": "run-s build:clean build:ts",
     "watch": "nodemon -e ts -w ./src -x 'run-p build test'",
