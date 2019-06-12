@@ -52,15 +52,17 @@ Douze is configured by environment variables where relevant, rather than code.
 
 Here is a list of configuration environment variables:
 
-- `APP_NAME`: string - The name of your application
-- `NODE_ENV`: 'development' | 'production' - Defines how Node is configured.
-- `LOG_LEVEL`: any of the levels defined in Pino, defaults to `info` in production and `debug` in development.
-- `HOST`: listening host, default `'0.0.0.0'`
-- `PORT`: listening port, default 3000
-- `SENTRY_DSN`: Enable Sentry error reporting by passing it the DSN to use.
-- `FINGERPRINT_SALT`: A salt is applied to the anonimisation function, rotate it to anonymise against previous logs
-- `DATABASE_FORCE_SYNC`: Set to true in development to reset the database and sync the models. Existing data will be lost !
-- `DATABASE_SEED`: Run seeding functions in development to start with fresh data.
+| Name                  |  Type   |                      Default                      | Description                                                                                        |
+| --------------------- | :-----: | :-----------------------------------------------: | -------------------------------------------------------------------------------------------------- |
+| `APP_NAME`            | string  |                   `'douze-app'`                   | The name of your application                                                                       |
+| `NODE_ENV`            | string  |                  `'development'`                  |                                                                                                    |
+| `LOG_LEVEL`           | string  | `'debug'` in development, `'info'` in production. | Any of the levels defined in Pino                                                                  |
+| `HOST`                | string  |                    `'0.0.0.0'`                    | Listening address                                                                                  |
+| `PORT`                | number  |                      `3000`                       | Listening port                                                                                     |
+| `FINGERPRINT_SALT`    | string  |                      random                       | A salt applied to the anonimisation function, rotate it to anonymise against previous logs         |
+| `SENTRY_DSN`          | string  |                     undefined                     | Enable Sentry error reporting by passing it the DSN to use                                         |
+| `DATABASE_FORCE_SYNC` | boolean |                     undefined                     | Set to true in development to reset the database and sync the models. Existing data will be lost ! |
+| `DATABASE_SEED`       | boolean |                     undefined                     | Run seeding functions in development to start with fresh data.                                     |
 
 Deployment variables (used to track deployed instances, those are set by default
 on Clever Cloud):
