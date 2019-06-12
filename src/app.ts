@@ -1,16 +1,11 @@
-import express, { Request, Response } from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import gracefulExit from 'express-graceful-exit'
 import helmet from 'helmet'
 import compression from 'compression'
 import expressPino from 'express-pino-logger'
-// import fingerprint from './middleware/fingerprint'
-// import extractJwt from './middleware/extractJwt'
-//import { attachGraphQLServer } from './graphql/index'
 import { __DEV__, DouzeApp, Config } from './defs'
-// import authRoutes from './routes/auth'
-// import errorHandler from './middleware/errorHandler'
-import { NextFunction } from 'connect'
-import logger from './logger'
+import { makeChildLogger } from './logger'
+import fingerprint from './middleware/fingerprint'
 
 // --
 
@@ -28,6 +23,8 @@ const handleCleverCloudHealthCheck = (
 
 // --
 
+const httpLogger = makeChildLogger('HTTP')
+
 const defaultConfig: Config = {
   db: {
     modelPaths: []
@@ -43,8 +40,8 @@ export default function createApplication(
   // Load middlewares --
 
   // - Logging
-  //app.use(fingerprint(process.env.FINGERPRINT_SALT))
-  app.use(expressPino({ logger: logger.pino }))
+  app.use(expressPino({ logger: httpLogger }))
+  app.use(fingerprint(process.env.FINGERPRINT_SALT))
 
   // - Body parsers
   app.use(express.json())
@@ -56,16 +53,7 @@ export default function createApplication(
   app.use(compression())
 
   // Auth
-  // app.use(extractJwt())
-
-  // Mount routes --
-
-  app.get('/', handleCleverCloudHealthCheck, (_, res) => {
-    res.send('Hello, world !')
-  })
-  // app.use('/auth', authRoutes)
-  // attachGraphQLServer(app)
-  // app.use(errorHandler())
+  app.get('/', handleCleverCloudHealthCheck)
 
   return app
 }

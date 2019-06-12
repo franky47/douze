@@ -3,6 +3,7 @@ import gracefulExit from 'express-graceful-exit'
 import * as Sentry from '@sentry/node'
 import checkEnv from '@47ng/check-env'
 import { instanceId, __DEV__, __PROD__, EnvConfig, DouzeApp } from './defs'
+import { makeChildLogger } from './logger'
 import initDatabase from './db'
 
 export interface AppServer extends Server {
@@ -23,6 +24,8 @@ export const mergeCheckEnvConfig = (
 
 // --
 
+const appLogger = makeChildLogger('APP')
+
 const startServer = async (app: DouzeApp): Promise<AppServer> => {
   const host = process.env.HOST || '0.0.0.0'
   const port = process.env.PORT || 3000
@@ -30,8 +33,9 @@ const startServer = async (app: DouzeApp): Promise<AppServer> => {
     let server = app.listen(port, () => {
       // Graceful shutdown handler
       const handleSignal = (signal: NodeJS.Signals) => {
-        logger.info(`${signal} received, shutting down gracefully`, 'APP', {
-          signal
+        appLogger.info({
+          msg: `${signal} received, shutting down gracefully`,
+          meta: { signal }
         })
         app.emit('stop')
         gracefulExit.gracefulExitHandler(app, server, {
@@ -39,12 +43,18 @@ const startServer = async (app: DouzeApp): Promise<AppServer> => {
           exitProcess: true,
           suicideTimeout: 10000, // 10 seconds
           logger: (message: any) => {
-            logger.info(message, 'APP', { signal })
+            appLogger.info({
+              msg: message,
+              meta: { signal }
+            })
           },
           callback: (statusCode: any) => {
-            logger.info('Bye bye', 'APP', {
-              statusCode,
-              signal
+            appLogger.info({
+              msg: 'Bye bye',
+              meta: {
+                statusCode,
+                signal
+              }
             })
           }
         })
@@ -67,9 +77,12 @@ const startServer = async (app: DouzeApp): Promise<AppServer> => {
 // --
 
 export default async function start(app: DouzeApp) {
-  logger.info('App is starting', 'INIT', {
-    environment: process.env.NODE_ENV,
-    logLevel: process.env.LOG_LEVEL
+  appLogger.info({
+    msg: 'App is starting',
+    meta: {
+      environment: process.env.NODE_ENV,
+      logLevel: process.env.LOG_LEVEL
+    }
   })
 
   const requiredEnv = ['APP_NAME', 'POSTGRESQL_ADDON_URI']
@@ -78,30 +91,61 @@ export default async function start(app: DouzeApp) {
   checkEnv({
     ...mergeCheckEnvConfig(requiredEnv, optionalEnv, app.config.env),
     logError: (name: string) => {
-      logger.error(`Missing required environment variable ${name}`, 'INIT', {
-        name
+      appLogger.error({
+        msg: `Missing required environment variable ${name}`,
+        meta: { name }
       })
     },
     logWarning: (name: string) => {
-      logger.warn(`Missing optional environment variable ${name}`, 'INIT', {
-        name
+      appLogger.warn({
+        msg: `Missing optional environment variable ${name}`,
+        meta: { name }
       })
     }
   })
 
-  if (__PROD__) {
+  if (__PROD__ && process.env.SENTRY_DSN) {
     // Setup Sentry error tracking
     // init will automatically find process.env.SENTRY_DSN if set
-    Sentry.init({
-      release: process.env.COMMIT_ID,
-      environment: instanceId
+    const release = process.env.COMMIT_ID
+    const environment = instanceId
+    Sentry.init({ release, environment })
+    appLogger.info({
+      msg: 'Sentry is setup for error reporting',
+      meta: {
+        release,
+        environment
+      }
     })
   }
 
-  // await initDatabase()
-  const server = await startServer(app)
-  logger.info('App is ready to receive connections', 'INIT', {
-    host: server.host,
-    port: server.port
-  })
+  try {
+    await initDatabase(app.config.db)
+    const server = await startServer(app)
+    appLogger.info({
+      msg: 'App is ready to receive connections',
+      meta: {
+        host: server.host,
+        port: server.port
+      }
+    })
+  } catch (error) {
+    if (
+      error.name === 'SequelizeConnectionError' ||
+      error.name === 'SequelizeConnectionRefusedError'
+    ) {
+      appLogger.error({
+        msg: 'Could not connect to database',
+        meta: {
+          ...error,
+          message: error.message
+        }
+      })
+      Sentry.captureException(error)
+      process.exit(1)
+    }
+    appLogger.error(error)
+    Sentry.captureException(error)
+    process.exit(1)
+  }
 }
