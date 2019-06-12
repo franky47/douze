@@ -25,6 +25,7 @@
     "build:ts": "tsc",
     "build": "run-s build:clean build:ts",
     "watch": "nodemon -e ts -w ./src -x 'run-p build test'",
+    "prepare": "run-s test build",
     "ci": "run-p -l -n --continue-on-error --aggregate-output build test"
   },
   "dependencies": {
