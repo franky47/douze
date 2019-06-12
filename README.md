@@ -1,5 +1,10 @@
 # `Douze`
 
+[![MIT License](https://img.shields.io/github/license/franky47/douze.svg?color=blue)](https://github.com/franky47/douze/blob/master/LICENSE)
+[![Travis CI Build](https://img.shields.io/travis/com/franky47/douze.svg)](https://travis-ci.com/franky47/douze)
+[![Average issue resolution time](https://isitmaintained.com/badge/resolution/franky47/douze.svg)](https://isitmaintained.com/project/franky47/douze)
+[![Number of open issues](https://isitmaintained.com/badge/open/franky47/douze.svg)](https://isitmaintained.com/project/franky47/douze)
+
 A [Twelve Factor app](https://12factor.net/) framework for Node.js written in TypeScript.
 
 ## Features
