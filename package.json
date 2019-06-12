@@ -9,6 +9,10 @@
     "email": "contact@francoisbest.com",
     "url": "https://francoisbest.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/franky47/douze"
+  },
   "keywords": [
     "twelve-factor"
   ],
