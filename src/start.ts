@@ -2,8 +2,8 @@ import { Server } from 'http'
 import gracefulExit from 'express-graceful-exit'
 import * as Sentry from '@sentry/node'
 import checkEnv from '@47ng/check-env'
-import { instanceId, __DEV__, __PROD__, Config, DouzeApp } from './defs'
-import logger from './logger'
+import { instanceId, __DEV__, __PROD__, EnvConfig, DouzeApp } from './defs'
+import initDatabase from './db'
 
 export interface AppServer extends Server {
   host: string
@@ -13,15 +13,11 @@ export interface AppServer extends Server {
 export const mergeCheckEnvConfig = (
   required: string[],
   optional: string[],
-  config?: Config
+  config?: EnvConfig
 ) => {
   return {
-    required: required.concat(
-      config && config.env ? config.env.required || [] : []
-    ),
-    optional: optional.concat(
-      config && config.env ? config.env.optional || [] : []
-    )
+    required: required.concat(config ? config.required || [] : []),
+    optional: optional.concat(config ? config.optional || [] : [])
   }
 }
 
@@ -80,7 +76,7 @@ export default async function start(app: DouzeApp) {
   const optionalEnv = ['SENTRY_DSN']
 
   checkEnv({
-    ...mergeCheckEnvConfig(requiredEnv, optionalEnv, app.config),
+    ...mergeCheckEnvConfig(requiredEnv, optionalEnv, app.config.env),
     logError: (name: string) => {
       logger.error(`Missing required environment variable ${name}`, 'INIT', {
         name

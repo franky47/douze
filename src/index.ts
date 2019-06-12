@@ -19,4 +19,4 @@ const Douze: Douze = {
 
 export default Douze
 
-export { Config }
+export * from './defs'

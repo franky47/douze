@@ -28,7 +28,15 @@ const handleCleverCloudHealthCheck = (
 
 // --
 
-export default function createApplication(config: Config = {}): DouzeApp {
+const defaultConfig: Config = {
+  db: {
+    modelPaths: []
+  }
+}
+
+export default function createApplication(
+  config: Config = defaultConfig
+): DouzeApp {
   const app: DouzeApp = Object.assign(express(), { config })
   app.enable('trust proxy')
 
