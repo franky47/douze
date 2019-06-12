@@ -1,10 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express'
-import gracefulExit from 'express-graceful-exit'
 import helmet from 'helmet'
 import compression from 'compression'
 import expressPino from 'express-pino-logger'
 import { __DEV__, DouzeApp, Config } from './defs'
 import { makeChildLogger } from './logger'
+import * as gracefulExit from './middleware/gracefulExit'
 import fingerprint from './middleware/fingerprint'
 
 // --

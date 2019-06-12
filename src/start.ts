@@ -1,8 +1,8 @@
 import { Server } from 'http'
-import gracefulExit from 'express-graceful-exit'
 import * as Sentry from '@sentry/node'
 import checkEnv from '@47ng/check-env'
 import { instanceId, __DEV__, __PROD__, EnvConfig, DouzeApp } from './defs'
+import * as gracefulExit from './middleware/gracefulExit'
 import { makeChildLogger } from './logger'
 import initDatabase from './db'
 
@@ -39,20 +39,21 @@ const startServer = async (app: DouzeApp): Promise<AppServer> => {
         })
         app.emit('stop')
         gracefulExit.gracefulExitHandler(app, server, {
-          log: true,
           exitProcess: true,
           suicideTimeout: 10000, // 10 seconds
+          exitDelay: 10,
+          force: false,
           logger: (message: any) => {
             appLogger.info({
               msg: message,
               meta: { signal }
             })
           },
-          callback: (statusCode: any) => {
+          callback: (exitCode: number) => {
             appLogger.info({
               msg: 'Bye bye',
               meta: {
-                statusCode,
+                exitCode,
                 signal
               }
             })
