@@ -7,3 +7,11 @@ cache: yarn
 
 script:
   - yarn ci
+
+deploy:
+  provider: npm
+  email: accounts@francoisbest.com
+  api_key:
+    secure: dmTo3iBvdKtcgA5K3dIDgG+uPfkujEiGSkJNCvZUNbsMi//jiPprhbAokpwjZAzqmJH+miOrdYJpEVGFywpfnc6NBxye0818AOTY0U1mWMVaf1IqWk2v6V5zjcRr+CusXlG74HKM8oymcocrQHyQL4z2LA/SpkqvNTmy4oUWuMYUw+InWlk5dTrmoqeMd0EdWCFnUEGlm5RS+YIN0C7UjrJQp8JXwdDzniWm8kcBMC6ml9wmDDPbxOtMhdtFlysTzmGWCsMsq98jh7D+m9W7bU0jW43eylSgiQ8XcZEDR3Ttj7RXMNS3VdVlR7qx062r1y27xwB0zFxe1f3MeWslLoOnyhnWieYoEG6g7iL4JpPNZwKfm/DkVwIAa93anBF1ULNnQPvPml5wgFjXq8COhWmEhFDuljyqLUsGgSODXbcnnRuXqSzLSdzji9ZM47vUqYsYiyus5fxi4pNsrwbqO90pUsGWr06VSR2mPt5LmxkDrbGtXn6+mnNcl/jtvt4av/pd2xXyOOP9BUG66Jpx9zt+xGxQBRO+6rQ7w2nX42y2inU+nTuLHGdm06AAhmqUbo3vmf/GwRL3JQk7qs8oXqQlZoeSJf+WSNRCNMUYsEwatK+LoVGqDGOjsz0dG+pcXxTh7DZkM7qn8LCiSIbqkgBeQlckzaQWc9ESBAlSVd8=
+  on:
+    tags: true
