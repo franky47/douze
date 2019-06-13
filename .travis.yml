@@ -16,3 +16,9 @@ deploy:
   on:
     tags: true
   skip_cleanup: true
+
+  notifications:
+  slack:
+    secure: u9se+Rbpd/XJ2HpV0n21v6ttVbqI97QLe152LiwsDgd+hPYhfsRyELWoMYYcRKA0jaUrRiS9rIDE6AyygDPI737gUWKIFtJtE9PhzXsk547WvkVcvdeAWDdro2EmqfMRgBQZ8Gyvr7+DepD0YRfe5WxFowVjNcM89RwGAWllfuGbVXJ1xTYCQlvqNnlDCUWyOY9tbukSD9souca5196evVbd8/YxJZlkAosVhdXTWIdB16WX8oSGaXhXwDwQ2GNBOrPJlCrFeAAhqWxQ/TGshUVo6Wr5SMrCIfMIKd/f44r0r9cCzfgZOmc21Lw4NNRNDo1QJBfxVBAwLFQAo3aL8ZKGdFP63RJtXEoKs6ij4LuNJ8rvcBcOo+Cf/G8sb4qKAm+OVUQebrThgXgQWGp1W0nsewUrj8TsaE66AF1cR+6L7M5HZdnhnGc1EUcyCG6LRpHszR0QKWKFYkJSBfz/sOIT9r7+uInZ91SUANJCu556KtGG86jp63XXAkuAEGQzoTmT4HQUSPmfRmcnnI92RmUVp+N6y5o0tje5d10oV3uMVphx1RJp2yRFF32tHJeqck4lPux4SppBT33rtPhG68VAJnulHQdcmdPQMeLCkMvze0FSIIILch6JmeoQjWenyn8LMXTIlG4CIbuEgYd+mFEAF4oZZUNu67UuqXba9GI=
+    on_success: change # default: always
+    on_failure: always # default: always
