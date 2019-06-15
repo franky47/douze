@@ -9,12 +9,26 @@ A [Twelve Factor app](https://12factor.net/) framework for Node.js written in Ty
 
 ## Features
 
-- 🐘 PostgreSQL database with [Sequelize](https://github.com/RobinBuschmann/sequelize-typescript)
 - 🏗️ App scaffolding with [Express](https://expressjs.com)
 - 🌲 Logging with [Pino](https://getpino.io)
-- ☁️ Deployment on [Clever Cloud](https://clever-cloud.com)
 - 🚨 Error reporting with [Sentry](https://sentry.io)
-- 🚀 _GraphQL with [Apollo Server 2.0](https://www.apollographql.com/docs/apollo-server/)_ (Coming soon)
+- 📦 Extensible with plugins (batteries included, but opt-in)
+
+### Plugins
+
+- [`douze-sequelize`](https://github.com/franky47/douze-sequelize): Use Sequelize as an ORM
+- _`douze-mongo`: MongoDB ODM (coming soon)_
+- _`douze-redis`: Redis cache (coming soon)_
+- _`douze-graphql`: GraphQL with [Apollo Server 2.0](https://www.apollographql.com/docs/apollo-server/)_ (coming soon)
+
+### Databases
+
+Extend Douze with [`douze-sequelize`](https://github.com/franky47/douze-sequelize) for SQL databases:
+
+- 🐘 PostgreSQL
+- 🐬 MySQL / MariaDB
+- 📄 SQLite
+- 💰 Microsoft SQL Server
 
 ## Installation
 
