@@ -26,7 +26,7 @@
     "build": "run-s build:clean build:ts",
     "watch": "nodemon -e ts -w ./src -x 'run-p build test'",
     "prepublish": "run-s test build",
-    "ci": "run-p -l -n --continue-on-error --aggregate-output build test"
+    "ci": "run-s test build"
   },
   "dependencies": {
     "@47ng/check-env": "^1.3.0",
