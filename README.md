@@ -52,17 +52,18 @@ Douze is configured by environment variables where relevant, rather than code.
 
 Here is a list of configuration environment variables:
 
-| Name                  |  Type   |                      Default                      | Description                                                                                        |
-| --------------------- | :-----: | :-----------------------------------------------: | -------------------------------------------------------------------------------------------------- |
-| `APP_NAME`            | string  |                   `'douze-app'`                   | The name of your application                                                                       |
-| `NODE_ENV`            | string  |                  `'development'`                  |                                                                                                    |
-| `LOG_LEVEL`           | string  | `'debug'` in development, `'info'` in production. | Any of the levels defined in Pino                                                                  |
-| `HOST`                | string  |                    `'0.0.0.0'`                    | Listening address                                                                                  |
-| `PORT`                | number  |                      `3000`                       | Listening port                                                                                     |
-| `FINGERPRINT_SALT`    | string  |                      random                       | A salt applied to the anonimisation function, rotate it to anonymise against previous logs         |
-| `SENTRY_DSN`          | string  |                     undefined                     | Enable Sentry error reporting by passing it the DSN to use                                         |
-| `DATABASE_FORCE_SYNC` | boolean |                     undefined                     | Set to true in development to reset the database and sync the models. Existing data will be lost ! |
-| `DATABASE_SEED`       | boolean |                     undefined                     | Run seeding functions in development to start with fresh data.                                     |
+| Name                        |  Type   |                      Default                      | Description                                                                                        |
+| --------------------------- | :-----: | :-----------------------------------------------: | -------------------------------------------------------------------------------------------------- |
+| `APP_NAME`                  | string  |                   `'douze-app'`                   | The name of your application                                                                       |
+| `NODE_ENV`                  | string  |                  `'development'`                  |                                                                                                    |
+| `LOG_LEVEL`                 | string  | `'debug'` in development, `'info'` in production. | Any of the levels defined in Pino                                                                  |
+| `HOST`                      | string  |                    `'0.0.0.0'`                    | Listening address                                                                                  |
+| `PORT`                      | number  |                      `3000`                       | Listening port                                                                                     |
+| `SENTRY_DSN`                | string  |                     undefined                     | Enable Sentry error reporting by passing it the DSN to use                                         |
+| `DOUZE_FINGERPRINT_SALT`    | string  |                      random                       | A salt applied to the anonimisation function, rotate it to anonymise against previous logs         |
+| `DOUZE_DATABASE_FORCE_SYNC` | boolean |                     undefined                     | Set to true in development to reset the database and sync the models. Existing data will be lost ! |
+| `DOUZE_DATABASE_SEED`       | boolean |                     undefined                     | Run seeding functions in development to start with fresh data.                                     |
+| `DOUZE_ENFORCE_PRIVACY`     | boolean |                       true                        | Redact privacy-busting information from logs in production (headers, source IP)                    |
 
 Deployment variables (used to track deployed instances, those are set by default
 on Clever Cloud):

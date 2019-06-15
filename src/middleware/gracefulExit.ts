@@ -1,4 +1,4 @@
-import { DouzeApp } from '../defs'
+import { App } from '../defs'
 import { Request, Response, NextFunction } from 'express'
 
 export interface GracefulExitOptions {
@@ -19,7 +19,7 @@ const defaultOptions: GracefulExitOptions = {
   callback: () => {}
 }
 
-let hardExitTimer: number | undefined
+let hardExitTimer: NodeJS.Timeout | undefined
 let connectionsClosed = false
 
 // --
@@ -41,7 +41,7 @@ const exit = (code: number, options: GracefulExitOptions) => {
 
 // --
 
-export const middleware = (app: DouzeApp) => {
+export const middleware = (app: App) => {
   // This flag is used to signal the below middleware when the server wants to stop.
   // New connections are handled for us by Node, but existing connections using the
   // Keep-Alive header require this workaround to close.
@@ -81,8 +81,10 @@ export function gracefulExitHandler(
     options.logger('No longer accepting connections')
     exit(0, options)
 
-    clearTimeout(hardExitTimer) // must be cleared after calling exit()
-    hardExitTimer = undefined
+    if (hardExitTimer) {
+      clearTimeout(hardExitTimer) // must be cleared after calling exit()
+      hardExitTimer = undefined
+    }
   })
 
   // If any connections linger past the suicide timeout, exit the process.

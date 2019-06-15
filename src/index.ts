@@ -1,22 +1,25 @@
 require('dotenv').config()
 
 import logger, { Logger } from './logger'
-import { Config, DouzeApp } from './defs'
+import { App } from './defs'
 import createApp from './app'
 import start from './start'
+import { RegisterHooksFn, registerHooks } from './hooks'
 
 interface Douze {
   log: Logger
-  createApp: (config?: Config) => DouzeApp
-  start: (app: DouzeApp) => Promise<void>
+  createApp: () => App
+  start: (app: App) => Promise<boolean>
+  registerHooks: RegisterHooksFn
 }
 
 const Douze: Douze = {
   log: logger,
   createApp,
-  start
+  start,
+  registerHooks
 }
 
 export default Douze
-
+export { Hooks } from './hooks'
 export * from './defs'

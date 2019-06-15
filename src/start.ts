@@ -1,15 +1,17 @@
-import { Server } from 'http'
 import * as Sentry from '@sentry/node'
 import checkEnv from '@47ng/check-env'
-import { instanceId, __DEV__, __PROD__, EnvConfig, DouzeApp } from './defs'
+import {
+  instanceId,
+  __DEV__,
+  __PROD__,
+  EnvConfig,
+  App,
+  AppServer
+} from './defs'
+import errorHandler from './middleware/errorHandler'
 import * as gracefulExit from './middleware/gracefulExit'
 import { makeChildLogger } from './logger'
-import initDatabase from './db'
-
-export interface AppServer extends Server {
-  host: string
-  port: string | number
-}
+import { runHooks } from './hooks'
 
 export const mergeCheckEnvConfig = (
   required: string[],
@@ -26,7 +28,7 @@ export const mergeCheckEnvConfig = (
 
 const appLogger = makeChildLogger('APP')
 
-const startServer = async (app: DouzeApp): Promise<AppServer> => {
+const startServer = async (app: App): Promise<AppServer> => {
   const host = process.env.HOST || '0.0.0.0'
   const port = process.env.PORT || 3000
   return new Promise(resolve => {
@@ -50,6 +52,11 @@ const startServer = async (app: DouzeApp): Promise<AppServer> => {
             })
           },
           callback: (exitCode: number) => {
+            runHooks.beforeExit({
+              app,
+              server: Object.assign({ host, port }, server),
+              signal
+            })
             appLogger.info({
               msg: 'Bye bye',
               meta: {
@@ -77,7 +84,9 @@ const startServer = async (app: DouzeApp): Promise<AppServer> => {
 
 // --
 
-export default async function start(app: DouzeApp) {
+export default async function start(app: App): Promise<boolean> {
+  app.use(errorHandler()) // todo: move that to app.start
+
   appLogger.info({
     msg: 'App is starting',
     meta: {
@@ -86,11 +95,10 @@ export default async function start(app: DouzeApp) {
     }
   })
 
-  const requiredEnv = ['APP_NAME', 'POSTGRESQL_ADDON_URI']
-  const optionalEnv = ['SENTRY_DSN']
-
   checkEnv({
-    ...mergeCheckEnvConfig(requiredEnv, optionalEnv, app.config.env),
+    required: ['APP_NAME', 'POSTGRESQL_ADDON_URI'],
+    optional: ['SENTRY_DSN'],
+    // ...mergeCheckEnvConfig(requiredEnv, optionalEnv, app.config.env),
     logError: (name: string) => {
       appLogger.error({
         msg: `Missing required environment variable ${name}`,
@@ -121,7 +129,12 @@ export default async function start(app: DouzeApp) {
   }
 
   try {
-    await initDatabase(app.config.db)
+    const goForLaunch = await runHooks.beforeStart({ app })
+    if (!goForLaunch) {
+      appLogger.warn('App startup cancelled by beforeStart hook', {})
+      return false
+    }
+
     const server = await startServer(app)
     appLogger.info({
       msg: 'App is ready to receive connections',
@@ -130,6 +143,7 @@ export default async function start(app: DouzeApp) {
         port: server.port
       }
     })
+    return true
   } catch (error) {
     if (
       error.name === 'SequelizeConnectionError' ||
@@ -142,11 +156,11 @@ export default async function start(app: DouzeApp) {
           message: error.message
         }
       })
-      Sentry.captureException(error)
-      process.exit(1)
+    } else {
+      appLogger.error(error)
     }
-    appLogger.error(error)
     Sentry.captureException(error)
-    process.exit(1)
+    process.exitCode = 1
+    return false
   }
 }

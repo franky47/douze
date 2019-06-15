@@ -1,11 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express'
+import pino from 'pino'
 import helmet from 'helmet'
 import compression from 'compression'
 import expressPino from 'express-pino-logger'
-import { __DEV__, DouzeApp, Config } from './defs'
+import { __DEV__, App } from './defs'
 import { makeChildLogger } from './logger'
 import * as gracefulExit from './middleware/gracefulExit'
 import fingerprint from './middleware/fingerprint'
+import { runHooks } from './hooks'
 
 // --
 
@@ -23,25 +25,37 @@ const handleCleverCloudHealthCheck = (
 
 // --
 
-const httpLogger = makeChildLogger('HTTP')
+// const defaultConfig: Config = {
+//   db: {
+//     modelPaths: []
+//   }
+// }
 
-const defaultConfig: Config = {
-  db: {
-    modelPaths: []
-  }
-}
-
-export default function createApplication(
-  config: Config = defaultConfig
-): DouzeApp {
-  const app: DouzeApp = Object.assign(express(), { config })
+export default function createApplication(): App {
+  const app: App = express()
   app.enable('trust proxy')
 
   // Load middlewares --
 
+  runHooks.beforeMiddlewareLoad({ app })
+
   // - Logging
-  app.use(expressPino({ logger: httpLogger }))
-  app.use(fingerprint(process.env.FINGERPRINT_SALT))
+  app.use(fingerprint(process.env.DOUZE_FINGERPRINT_SALT))
+  app.use(
+    expressPino({
+      logger: makeChildLogger('HTTP'),
+      serializers: {
+        req: (req: any) => {
+          console.log(req.raw.ip, req.raw.ips)
+          return {
+            // Somehow this drops remoteAddress and remotePort as a side-effect..
+            fingerprint: req.raw.fingerprint,
+            ...pino.stdSerializers.req(req)
+          }
+        }
+      }
+    })
+  )
 
   // - Body parsers
   app.use(express.json())
@@ -54,6 +68,8 @@ export default function createApplication(
 
   // Auth
   app.get('/', handleCleverCloudHealthCheck)
+
+  runHooks.afterMiddlewareLoad({ app })
 
   return app
 }
