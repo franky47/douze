@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/node'
-import checkEnv from '@47ng/check-env'
 import {
   instanceId,
   __DEV__,
@@ -12,6 +11,7 @@ import errorHandler from './middleware/errorHandler'
 import * as gracefulExit from './middleware/gracefulExit'
 import { makeChildLogger } from './logger'
 import { runHooks } from './hooks'
+import { checkEnvironment } from './env'
 
 export const mergeCheckEnvConfig = (
   required: string[],
@@ -95,23 +95,18 @@ export default async function start(app: App): Promise<boolean> {
     }
   })
 
-  checkEnv({
-    required: ['APP_NAME', 'POSTGRESQL_ADDON_URI'],
-    optional: ['SENTRY_DSN'],
-    // ...mergeCheckEnvConfig(requiredEnv, optionalEnv, app.config.env),
-    logError: (name: string) => {
-      appLogger.error({
-        msg: `Missing required environment variable ${name}`,
-        meta: { name }
-      })
-    },
-    logWarning: (name: string) => {
-      appLogger.warn({
-        msg: `Missing optional environment variable ${name}`,
-        meta: { name }
-      })
-    }
-  })
+  try {
+    checkEnvironment(appLogger)
+  } catch (error) {
+    appLogger.fatal({
+      message: error.message,
+      meta: {
+        missing: error.missing
+      }
+    })
+    process.exitCode = 1
+    return false
+  }
 
   if (__PROD__ && process.env.SENTRY_DSN) {
     // Setup Sentry error tracking
@@ -145,20 +140,21 @@ export default async function start(app: App): Promise<boolean> {
     })
     return true
   } catch (error) {
-    if (
-      error.name === 'SequelizeConnectionError' ||
-      error.name === 'SequelizeConnectionRefusedError'
-    ) {
-      appLogger.error({
-        msg: 'Could not connect to database',
-        meta: {
-          ...error,
-          message: error.message
-        }
-      })
-    } else {
-      appLogger.error(error)
-    }
+    // todo: move this to douze-sequelize
+    // if (
+    //   error.name === 'SequelizeConnectionError' ||
+    //   error.name === 'SequelizeConnectionRefusedError'
+    // ) {
+    //   appLogger.error({
+    //     msg: 'Could not connect to database',
+    //     meta: {
+    //       ...error,
+    //       message: error.message
+    //     }
+    //   })
+    // } else {
+    // }
+    appLogger.fatal(error)
     Sentry.captureException(error)
     process.exitCode = 1
     return false
