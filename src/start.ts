@@ -9,7 +9,7 @@ import {
 } from './defs'
 import errorHandler from './middleware/errorHandler'
 import * as gracefulExit from './middleware/gracefulExit'
-import { makeChildLogger } from './logger'
+import { createChildLogger } from './logger'
 import { runHooks } from './hooks'
 import { checkEnvironment } from './env'
 
@@ -26,7 +26,7 @@ export const mergeCheckEnvConfig = (
 
 // --
 
-const appLogger = makeChildLogger('APP')
+const appLogger = createChildLogger('app')
 
 const startServer = async (app: App): Promise<AppServer> => {
   const host = process.env.HOST || '0.0.0.0'

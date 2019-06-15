@@ -24,23 +24,13 @@ const rootLogger = pino({
   }
 })
 
-export const makeChildLogger = (
-  category: LogCategory,
-  { ...args } = {}
-): Logger =>
+export const createChildLogger = (category: string, { ...args } = {}): Logger =>
   rootLogger.child({
     category,
     ...args
   })
 
 // --
-
-// todo: These might want to be extended in final app
-export type LogCategory = 'APP' | 'HTTP' | 'API' | 'AUTH' | 'DB'
-
-export type LogMeta = { [key: string]: any }
-
-export type LogFn = (msg: string, category: LogCategory, meta?: LogMeta) => void
 
 export default rootLogger
 

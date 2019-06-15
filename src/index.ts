@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-import logger, { Logger } from './logger'
+import logger, { Logger, createChildLogger } from './logger'
 import { App } from './defs'
 import createApp from './app'
 import start from './start'
@@ -9,6 +9,7 @@ import { RegisterPluginFn, registerPlugin } from './plugin'
 interface Douze {
   log: Logger
   createApp: () => App
+  createLogger: (category: string) => Logger
   start: (app: App) => Promise<boolean>
   extend: RegisterPluginFn
 }
@@ -16,6 +17,7 @@ interface Douze {
 const Douze: Douze = {
   log: logger,
   createApp,
+  createLogger: createChildLogger,
   start,
   extend: registerPlugin
 }

@@ -4,7 +4,7 @@ import helmet from 'helmet'
 import compression from 'compression'
 import expressPino from 'express-pino-logger'
 import { __DEV__, App } from './defs'
-import { makeChildLogger } from './logger'
+import { createChildLogger } from './logger'
 import * as gracefulExit from './middleware/gracefulExit'
 import fingerprint from './middleware/fingerprint'
 import { runHooks } from './hooks'
@@ -25,12 +25,6 @@ const handleCleverCloudHealthCheck = (
 
 // --
 
-// const defaultConfig: Config = {
-//   db: {
-//     modelPaths: []
-//   }
-// }
-
 export default function createApplication(): App {
   const app: App = express()
   app.enable('trust proxy')
@@ -43,7 +37,7 @@ export default function createApplication(): App {
   app.use(fingerprint(process.env.DOUZE_FINGERPRINT_SALT))
   app.use(
     expressPino({
-      logger: makeChildLogger('HTTP'),
+      logger: createChildLogger('http'),
       serializers: {
         req: (req: any) => {
           console.log(req.raw.ip, req.raw.ips)
