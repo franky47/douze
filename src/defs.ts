@@ -14,21 +14,6 @@ export const instanceId = [
 
 // --
 
-export interface DbConfig {
-  modelPaths: string[]
-  seedModels?: () => Promise<void>
-}
-
-export interface EnvConfig {
-  required: string[]
-  optional?: string[]
-}
-
-// export interface Config {
-//   env?: EnvConfig
-//   db: DbConfig
-// }
-
 export type App = Express
 
 export interface AppServer extends Server {

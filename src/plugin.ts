@@ -1,7 +1,19 @@
-import { Hooks, registerHooks } from './hooks'
-import { addRequiredEnv, addOptionalEnv } from './env'
+import {
+  createHooksRegistry,
+  registerHooks,
+  Hooks,
+  HooksRegistry
+} from './hooks'
+import {
+  createEnvRegistry,
+  registerRequiredEnv,
+  registerOptionalEnv,
+  EnvRequirementsRegistry
+} from './env'
+import { appLogger } from './app'
 
 export interface Plugin {
+  name?: string
   env?: {
     required: string[]
     optional?: string[]
@@ -9,19 +21,32 @@ export interface Plugin {
   hooks?: Hooks
 }
 
-const plugins: Plugin[] = []
+export interface PluginRegistry {
+  names: string[]
+  env: EnvRequirementsRegistry
+  hooks: HooksRegistry
+}
 
 // --
 
+export const createPluginRegistry = (): PluginRegistry => ({
+  names: [],
+  env: createEnvRegistry(),
+  hooks: createHooksRegistry()
+})
+
 export type RegisterPluginFn = (plugin: Plugin) => void
 
-export const registerPlugin: RegisterPluginFn = plugin => {
-  plugins.push(plugin)
+export const registerPlugin = (plugin: Plugin, registry: PluginRegistry) => {
+  const name = plugin.name || 'unnamed-plugin'
+  appLogger.debug({ message: 'Registering plugin', meta: { name } })
+  registry.names.push(name)
   if (plugin.hooks) {
-    registerHooks(plugin.hooks)
+    registerHooks(plugin.hooks, registry.hooks, name)
   }
   if (plugin.env) {
-    plugin.env.required.forEach(addRequiredEnv)
-    plugin.env.optional && plugin.env.optional.forEach(addOptionalEnv)
+    plugin.env.required.forEach(env => registerRequiredEnv(env, registry.env))
+    plugin.env.optional &&
+      plugin.env.optional.forEach(env => registerOptionalEnv(env, registry.env))
   }
 }

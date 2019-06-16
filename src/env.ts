@@ -1,32 +1,57 @@
-type EnvSet = Set<string>
 import checkEnv from '@47ng/check-env'
 import { Logger } from 'pino'
 
-interface EnvRequirementsStorage {
+type EnvSet = Set<string>
+
+export interface EnvRequirementsRegistry {
   required: EnvSet
   optional: EnvSet
 }
 
-const envRequirements: EnvRequirementsStorage = {
+// --
+
+export const createEnvRegistry = (): EnvRequirementsRegistry => ({
   required: new Set(),
   optional: new Set()
+})
+
+// --
+
+export const registerRequiredEnv = (
+  name: string,
+  registry: EnvRequirementsRegistry
+) => {
+  registry.required.add(name)
 }
 
-export const addRequiredEnv = (name: string) => {
-  envRequirements.required.add(name)
+export const registerOptionalEnv = (
+  name: string,
+  registry: EnvRequirementsRegistry
+) => {
+  registry.optional.add(name)
 }
 
-export const addOptionalEnv = (name: string) => {
-  envRequirements.optional.add(name)
+// --
+
+export const _assembleEnvironment = (registry: EnvRequirementsRegistry) => {
+  const requiredCoreEnv: string[] = ['NODE_ENV']
+  const optionalCoreEnv: string[] = ['APP_NAME', 'SENTRY_DSN']
+  return {
+    required: [...requiredCoreEnv, ...registry.required],
+    optional: [...optionalCoreEnv, ...registry.optional]
+  }
 }
 
-export const checkEnvironment = (logger: Logger) => {
-  const requiredCoreEnv = ['APP_NAME']
-  const optionalCoreEnv = ['SENTRY_DSN']
+// --
 
+export const checkEnvironment = (
+  logger: Logger,
+  registry: EnvRequirementsRegistry
+) => {
+  const { required, optional } = _assembleEnvironment(registry)
   checkEnv({
-    required: [...requiredCoreEnv, ...envRequirements.required],
-    optional: [...optionalCoreEnv, ...envRequirements.optional],
+    required,
+    optional,
     logError: (name: string) => {
       logger.error({
         msg: `Missing required environment variable ${name}`,

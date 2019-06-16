@@ -1,13 +1,19 @@
 import express, { Request, Response, NextFunction } from 'express'
+import * as Sentry from '@sentry/node'
 import pino from 'pino'
 import helmet from 'helmet'
 import compression from 'compression'
 import expressPino from 'express-pino-logger'
-import { __DEV__, App } from './defs'
+import { __DEV__, __PROD__, instanceId, App } from './defs'
 import { createChildLogger } from './logger'
 import * as gracefulExit from './middleware/gracefulExit'
 import fingerprint from './middleware/fingerprint'
-import { runHooks } from './hooks'
+import { checkEnvironment } from './env'
+import { PluginRegistry } from './plugin'
+
+// --
+
+export const appLogger = createChildLogger('app')
 
 // --
 
@@ -25,13 +31,60 @@ const handleCleverCloudHealthCheck = (
 
 // --
 
-export default function createApplication(): App {
+export default function createApplication(plugins: PluginRegistry): App {
+  try {
+    checkEnvironment(appLogger, plugins.env)
+  } catch (error) {
+    appLogger.fatal({
+      message: error.message,
+      meta: {
+        missing: error.missing
+      }
+    })
+    process.exit(1)
+  }
+
+  appLogger.debug({
+    message: 'Loaded plugins',
+    meta: {
+      plugins: plugins.names
+    }
+  })
+
+  if (__PROD__ && process.env.SENTRY_DSN) {
+    // Setup Sentry error tracking
+    // init will automatically find process.env.SENTRY_DSN if set
+    const release = process.env.COMMIT_ID
+    const environment = instanceId
+    Sentry.init({ release, environment })
+    appLogger.info({
+      msg: 'Sentry is setup for error reporting',
+      meta: {
+        release,
+        environment
+      }
+    })
+  }
+
   const app: App = express()
   app.enable('trust proxy')
 
   // Load middlewares --
 
-  runHooks.beforeMiddlewareLoad({ app })
+  try {
+    plugins.hooks.beforeMiddlewareLoad({ app })
+  } catch (error) {
+    Sentry.captureException(error)
+    appLogger.fatal({
+      msg: error.message,
+      err: error,
+      meta: {
+        plugin: error.plugin,
+        hook: 'beforeMiddlewareLoad'
+      }
+    })
+    throw error
+  }
 
   // - Logging
   app.use(fingerprint(process.env.DOUZE_FINGERPRINT_SALT))
@@ -63,7 +116,20 @@ export default function createApplication(): App {
   // Auth
   app.get('/', handleCleverCloudHealthCheck)
 
-  runHooks.afterMiddlewareLoad({ app })
+  try {
+    plugins.hooks.afterMiddlewareLoad({ app })
+  } catch (error) {
+    Sentry.captureException(error)
+    appLogger.fatal({
+      msg: error.message,
+      err: error,
+      meta: {
+        plugin: error.plugin,
+        hook: 'afterMiddlewareLoad'
+      }
+    })
+    throw error
+  }
 
   return app
 }

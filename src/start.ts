@@ -1,38 +1,32 @@
+import { Server } from 'http'
 import * as Sentry from '@sentry/node'
-import {
-  instanceId,
-  __DEV__,
-  __PROD__,
-  EnvConfig,
-  App,
-  AppServer
-} from './defs'
+import { __DEV__, App, AppServer } from './defs'
 import errorHandler from './middleware/errorHandler'
 import * as gracefulExit from './middleware/gracefulExit'
-import { createChildLogger } from './logger'
-import { runHooks } from './hooks'
-import { checkEnvironment } from './env'
-
-export const mergeCheckEnvConfig = (
-  required: string[],
-  optional: string[],
-  config?: EnvConfig
-) => {
-  return {
-    required: required.concat(config ? config.required || [] : []),
-    optional: optional.concat(config ? config.optional || [] : [])
-  }
-}
+import { appLogger } from './app'
+import { PluginRegistry } from './plugin'
+import { HookError } from './hooks'
 
 // --
 
-const appLogger = createChildLogger('app')
+export const createAppServer = (
+  server: Server,
+  host: string,
+  port: string | number
+): AppServer => Object.assign({}, server, { host, port })
 
-const startServer = async (app: App): Promise<AppServer> => {
+// --
+
+const startServer = async (
+  app: App,
+  plugins: PluginRegistry
+): Promise<AppServer> => {
   const host = process.env.HOST || '0.0.0.0'
   const port = process.env.PORT || 3000
   return new Promise(resolve => {
     let server = app.listen(port, () => {
+      const appServer = createAppServer(server, host, port)
+
       // Graceful shutdown handler
       const handleSignal = (signal: NodeJS.Signals) => {
         appLogger.info({
@@ -52,11 +46,20 @@ const startServer = async (app: App): Promise<AppServer> => {
             })
           },
           callback: (exitCode: number) => {
-            runHooks.beforeExit({
-              app,
-              server: Object.assign({ host, port }, server),
-              signal
-            })
+            try {
+              plugins.hooks.beforeExit({ app, server: appServer, signal })
+            } catch (error) {
+              Sentry.captureException(error)
+              appLogger.error({
+                msg: error.message,
+                err: error,
+                details: error.errors,
+                meta: {
+                  hook: 'beforeExit',
+                  plugins: error.errors.map((e: HookError) => e.plugin)
+                }
+              })
+            }
             appLogger.info({
               msg: 'Bye bye',
               meta: {
@@ -77,15 +80,19 @@ const startServer = async (app: App): Promise<AppServer> => {
         process.on('SIGUSR2', handleSignal)
       }
 
-      resolve(Object.assign({ port, host }, server))
+      resolve(appServer)
     })
   })
 }
 
 // --
 
-export default async function start(app: App): Promise<boolean> {
-  app.use(errorHandler()) // todo: move that to app.start
+export default async function start(
+  app: App,
+  plugins: PluginRegistry
+): Promise<boolean> {
+  // Final error handler
+  app.use(errorHandler())
 
   appLogger.info({
     msg: 'App is starting',
@@ -96,41 +103,30 @@ export default async function start(app: App): Promise<boolean> {
   })
 
   try {
-    checkEnvironment(appLogger)
+    const goForLaunch = await plugins.hooks.beforeStart({ app })
+    if (!goForLaunch) {
+      appLogger.warn({
+        msg: 'App startup cancelled by beforeStart hook'
+      })
+      return false
+    }
   } catch (error) {
+    Sentry.captureException(error)
     appLogger.fatal({
-      message: error.message,
+      msg: error.message,
+      err: error,
+      details: error.errors,
       meta: {
-        missing: error.missing
+        hook: 'beforeStart',
+        plugins: error.errors.map((e: HookError) => e.plugin)
       }
     })
-    process.exitCode = 1
     return false
   }
 
-  if (__PROD__ && process.env.SENTRY_DSN) {
-    // Setup Sentry error tracking
-    // init will automatically find process.env.SENTRY_DSN if set
-    const release = process.env.COMMIT_ID
-    const environment = instanceId
-    Sentry.init({ release, environment })
-    appLogger.info({
-      msg: 'Sentry is setup for error reporting',
-      meta: {
-        release,
-        environment
-      }
-    })
-  }
-
+  let server
   try {
-    const goForLaunch = await runHooks.beforeStart({ app })
-    if (!goForLaunch) {
-      appLogger.warn('App startup cancelled by beforeStart hook', {})
-      return false
-    }
-
-    const server = await startServer(app)
+    server = await startServer(app, plugins)
     appLogger.info({
       msg: 'App is ready to receive connections',
       meta: {
@@ -138,25 +134,26 @@ export default async function start(app: App): Promise<boolean> {
         port: server.port
       }
     })
-    return true
   } catch (error) {
-    // todo: move this to douze-sequelize
-    // if (
-    //   error.name === 'SequelizeConnectionError' ||
-    //   error.name === 'SequelizeConnectionRefusedError'
-    // ) {
-    //   appLogger.error({
-    //     msg: 'Could not connect to database',
-    //     meta: {
-    //       ...error,
-    //       message: error.message
-    //     }
-    //   })
-    // } else {
-    // }
-    appLogger.fatal(error)
     Sentry.captureException(error)
-    process.exitCode = 1
+    appLogger.fatal({ msg: error.message, err: error })
     return false
   }
+
+  try {
+    await plugins.hooks.appReady({ app, server })
+  } catch (error) {
+    Sentry.captureException(error)
+    appLogger.error({
+      msg: error.message,
+      err: error,
+      details: error.errors,
+      meta: {
+        hook: 'appReady',
+        plugins: error.errors.map((e: HookError) => e.plugin)
+      }
+    })
+  }
+
+  return true
 }
