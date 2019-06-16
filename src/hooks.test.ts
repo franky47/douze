@@ -31,13 +31,16 @@ describe('hook runners', () => {
       const received = hooks.runHooksInSequenceCollectErrors<any, string>(
         'name',
         [
-          { name: 'foo', hook: arg => Promise.resolve(arg + 'foo') },
-          { name: 'bar', hook: arg => Promise.resolve(arg + 'bar') }
+          { name: 'foo', hook: arg => Promise.resolve(arg) },
+          { name: 'bar', hook: arg => Promise.resolve(arg) }
         ],
         'egg',
-        results => results.join(',')
+        results =>
+          Array.from(results.entries())
+            .map(([plugin, result]) => `${plugin}:${result}`)
+            .join(',')
       )
-      await expect(received).resolves.toBe('eggfoo,eggbar')
+      await expect(received).resolves.toBe('foo:egg,bar:egg')
     })
 
     test('one throw lets subsequent hooks run', async () => {
@@ -55,7 +58,7 @@ describe('hook runners', () => {
           }
         ],
         'egg',
-        results => results.join(',')
+        () => 'spam'
       )
       await expect(received).rejects.toThrow(hooks.HookErrors)
       expect(mockFn).toHaveBeenCalledWith('egg')
@@ -70,7 +73,7 @@ describe('hook runners', () => {
             { name: 'bar', hook: () => Promise.reject(new Error('barError')) }
           ],
           'egg',
-          results => results.join(',')
+          () => 'spam'
         )
         .catch(err => err)
       expect(received.message).toMatch('hookName')
@@ -113,13 +116,16 @@ describe('hook runners', () => {
       const received = hooks.runHooksInParallelCollectErrors<any, string>(
         'name',
         [
-          { name: 'foo', hook: arg => Promise.resolve(arg + 'foo') },
-          { name: 'bar', hook: arg => Promise.resolve(arg + 'bar') }
+          { name: 'foo', hook: arg => Promise.resolve(arg) },
+          { name: 'bar', hook: arg => Promise.resolve(arg) }
         ],
         'egg',
-        results => results.join(',')
+        results =>
+          Array.from(results.entries())
+            .map(([plugin, result]) => `${plugin}:${result}`)
+            .join(',')
       )
-      await expect(received).resolves.toBe('eggfoo,eggbar')
+      await expect(received).resolves.toBe('foo:egg,bar:egg')
     })
 
     test('one throw lets subsequent hooks run', async () => {
@@ -137,7 +143,7 @@ describe('hook runners', () => {
           }
         ],
         'egg',
-        results => results.join(',')
+        () => 'spam'
       )
       await expect(received).rejects.toThrow(hooks.HookErrors)
       expect(mockFn).toHaveBeenCalledWith('egg')
@@ -152,7 +158,7 @@ describe('hook runners', () => {
             { name: 'bar', hook: () => Promise.reject(new Error('barError')) }
           ],
           'egg',
-          results => results.join(',')
+          () => 'spam'
         )
         .catch(err => err)
       expect(received.message).toMatch('hookName')
@@ -271,7 +277,7 @@ describe('hooks', () => {
       {
         beforeStart: async args => {
           mockFn(args)
-          return Promise.resolve(true)
+          return Promise.resolve({ ok: true })
         }
       },
       registry,
@@ -282,54 +288,60 @@ describe('hooks', () => {
     expect(mockFn).toHaveBeenCalledWith({ app })
   })
 
-  test('beforeStart should return true if no hooks have been registered', async () => {
+  test('beforeStart should say ok if no hooks have been registered', async () => {
     const registry = hooks.createHooksRegistry()
     const app = <Express.Express>{}
     const result = await registry.beforeStart({ app })
-    expect(result).toBe(true)
+    expect(result).toEqual({ ok: true })
   })
 
-  test('beforeStart should return true if all return true', async () => {
+  test('beforeStart should say ok if all say ok', async () => {
     const registry = hooks.createHooksRegistry()
     hooks.registerHooks(
       {
-        beforeStart: () => Promise.resolve(true)
+        beforeStart: () => Promise.resolve({ ok: true })
       },
       registry,
       'foo'
     )
     hooks.registerHooks(
       {
-        beforeStart: () => Promise.resolve(true)
+        beforeStart: () => Promise.resolve({ ok: true })
       },
       registry,
       'bar'
     )
     const app = <Express.Express>{}
     const result = await registry.beforeStart({ app })
-    expect(result).toBe(true)
+    expect(result).toEqual({ ok: true })
   })
 
-  test('beforeStart should return false if any returns false', async () => {
+  test('beforeStart should collect reasons for no go', async () => {
     const registry = hooks.createHooksRegistry()
 
     hooks.registerHooks(
       {
-        beforeStart: () => Promise.resolve(true)
+        beforeStart: () => Promise.resolve({ ok: false, reason: 'nope' })
       },
       registry,
       'foo'
     )
     hooks.registerHooks(
       {
-        beforeStart: () => Promise.resolve(false)
+        beforeStart: () => Promise.resolve({ ok: false, reason: 'meh' })
       },
       registry,
       'bar'
     )
     const app = <Express.Express>{}
     const result = await registry.beforeStart({ app })
-    expect(result).toBe(false)
+    expect(result).toEqual({
+      ok: false,
+      reason: {
+        foo: 'nope',
+        bar: 'meh'
+      }
+    })
   })
 
   test('beforeStart should reject if any rejects', async () => {
@@ -355,7 +367,7 @@ describe('hooks', () => {
           // Simulate asynchronism
           await new Promise(resolve => setTimeout(resolve, 100))
           mockFn(args)
-          return true
+          return { ok: true }
         }
       },
       registry,

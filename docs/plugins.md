@@ -69,17 +69,51 @@ want to add custom middleware and routes to your app before yours
 ### `beforeStart`
 
 Called before Douze starts the server, this hook acts like a last minute
-preflight check, and can abort the launch if needed, by returning false
-(or throwing an error, but returning false is cleaner and the preferred
-way).
+preflight check, and can abort the launch if needed.
 
-If you develop a plugin and find you need to abort, consider logging
-the reason before returning `false`, to let the user know what happened.
+The return value for this hook is an object:
+
+```ts
+interface BeforeStartResult {
+  ok: boolean // if set to false, will request to abort launch
+  reason?: any // required when ok === false
+}
+```
+
+You have to provide a reason (can be a string or something more complex)
+for requesting to abort the launch, which will be logged to help the
+users of your plugin troubleshoot issues.
+
+Example:
+
+```ts
+Douze.extend({
+  name: 'beforeStart-demo',
+  hooks: {
+    beforeStart: async ({ app }) => {
+      if (app.disabled('some-critical-setting')) {
+        return {
+          ok: false,
+          reason: 'not secure, some-critical-setting is disabled'
+        }
+      }
+      return { ok: true }
+    }
+  }
+})
+```
+
+Note that all `beforeStart` hooks from registered plugins will be allowed
+to run to completion concurrently (even if one throws), and the decision
+to abort launch will be taken if any of them has returned `ok: false` or
+thrown an error.
+
+> _Tip: you should try and catch most errors yourself and return a user-understandable reason for aborting, rather than the error object itself as a reason._
 
 ### `appReady`
 
 Called after the server has been started. These hooks will run in
-parallel, and any error thrown from them will be logged, but will
+concurrently, and any error thrown from them will be logged, but will
 not result in app shutdown.
 
 ### `beforeExit`
@@ -90,6 +124,10 @@ You can use it to release resources and perform cleanup tasks.
 The name of the signal that caused the app to shutdown is passed in the
 object argument, so you can implement different strategies, however you
 can no longer cancel the shutdown at this time.
+
+This hook is an async method, but calls to `beforeExit` from registered
+plugins will be made sequencially (in the order of plugin registration),
+to avoid race conditions on exit.
 
 ### Error handling in hooks
 

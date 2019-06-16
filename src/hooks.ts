@@ -23,12 +23,17 @@ export interface BeforeExitArgs {
 
 export type Hooks = Partial<AllHooks>
 
+export interface BeforeStartResult {
+  ok: boolean
+  reason?: any
+}
+
 // --
 
 interface AllHooks {
   beforeMiddlewareLoad: (args: MiddlewareLoadArgs) => void
   afterMiddlewareLoad: (args: MiddlewareLoadArgs) => void
-  beforeStart: (args: BeforeStartArgs) => Promise<boolean>
+  beforeStart: (args: BeforeStartArgs) => Promise<BeforeStartResult>
   appReady: (args: AppReadyArgs) => Promise<void>
   beforeExit: (args: BeforeExitArgs) => Promise<void>
 }
@@ -80,15 +85,15 @@ export const runHooksInSequenceCollectErrors = async <Args, Return>(
   hookName: string,
   store: HookCell<AsyncHook<Args, Return>>[],
   args: Args,
-  reducer: (results: (Return | null)[]) => Return
+  reducer: (results: Map<string, Return>) => Return
 ): Promise<Return> => {
   const errorMap: ErrorMap = new Map()
-  const results: Return[] = []
+  const results: Map<string, Return> = new Map()
 
   for (const { name: plugin, hook } of store) {
     try {
       const result = await hook(args)
-      results.push(result)
+      results.set(plugin, result)
     } catch (error) {
       errorMap.set(plugin, new HookError(error, hookName, plugin))
     }
@@ -106,14 +111,12 @@ export const runHooksInParallelCollectErrors = async <Args, Return>(
   hookName: string,
   store: HookCell<AsyncHook<Args, Return>>[],
   args: Args,
-  reducer: (results: (Return | null)[]) => Return
+  reducer: (results: Map<string, Return>) => Return
 ): Promise<Return> => {
   const errorMap: ErrorMap = new Map()
   const promises = store.map(({ name: plugin, hook }) => {
     return hook(args)
-      .then(result => {
-        return result
-      })
+      .then((result): [string, Return] => [plugin, result])
       .catch(error => {
         errorMap.set(plugin, new HookError(error, hookName, plugin))
         return null
@@ -123,7 +126,7 @@ export const runHooksInParallelCollectErrors = async <Args, Return>(
   if (errorMap.size) {
     throw new HookErrors(hookName, errorMap)
   }
-  return reducer(results)
+  return reducer(new Map(<[string, Return][]>results))
 }
 
 // --
@@ -156,12 +159,32 @@ export const createHooksRegistry = (): HooksRegistry => {
         }
       })
     },
-    beforeStart: async (args: BeforeStartArgs): Promise<boolean> => {
+    beforeStart: async (
+      args: BeforeStartArgs
+    ): Promise<{ ok: boolean; reason?: any }> => {
       return runHooksInParallelCollectErrors(
         'beforeStart',
         _storage.beforeStart,
         args,
-        results => results.every(r => !!r)
+        results => {
+          const ok = Array.from(results.values()).every(
+            result => result && result.ok
+          )
+          return {
+            ok,
+            reason: ok
+              ? undefined
+              : Array.from(results.entries())
+                  .filter(([_, result]) => result && result.reason)
+                  .reduce(
+                    (acc, [plugin, result]) => ({
+                      ...acc,
+                      [plugin]: result.reason
+                    }),
+                    {}
+                  )
+          }
+        }
       )
     },
     appReady: async (args: AppReadyArgs): Promise<void> => {

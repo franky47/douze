@@ -103,10 +103,13 @@ export default async function start(
   })
 
   try {
-    const goForLaunch = await plugins.hooks.beforeStart({ app })
-    if (!goForLaunch) {
+    const { ok, reason } = await plugins.hooks.beforeStart({ app })
+    if (!ok) {
       appLogger.warn({
-        msg: 'App startup cancelled by beforeStart hook'
+        msg: 'App startup cancelled by beforeStart hook',
+        meta: {
+          reason
+        }
       })
       return false
     }
