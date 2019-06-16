@@ -20,7 +20,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --verbose",
     "build:clean": "rm -rf ./dist",
     "build:ts": "tsc",
     "build": "run-s build:clean build:ts",
