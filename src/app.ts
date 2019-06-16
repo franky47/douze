@@ -36,7 +36,7 @@ export default function createApplication(plugins: PluginRegistry): App {
     checkEnvironment(appLogger, plugins.env)
   } catch (error) {
     appLogger.fatal({
-      message: error.message,
+      msg: error.message,
       meta: {
         missing: error.missing
       }
@@ -45,7 +45,7 @@ export default function createApplication(plugins: PluginRegistry): App {
   }
 
   appLogger.debug({
-    message: 'Loaded plugins',
+    msg: 'Loaded plugins',
     meta: {
       plugins: plugins.names
     }

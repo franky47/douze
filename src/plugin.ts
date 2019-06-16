@@ -39,7 +39,7 @@ export type RegisterPluginFn = (plugin: Plugin) => void
 
 export const registerPlugin = (plugin: Plugin, registry: PluginRegistry) => {
   const name = plugin.name || 'unnamed-plugin'
-  appLogger.debug({ message: 'Registering plugin', meta: { name } })
+  appLogger.debug({ msg: 'Registering plugin', meta: { name } })
   registry.names.push(name)
   if (plugin.hooks) {
     registerHooks(plugin.hooks, registry.hooks, name)
