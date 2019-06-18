@@ -12,13 +12,14 @@ import {
 } from './env'
 import { appLogger } from './app'
 
-export interface Plugin {
+export interface Plugin<R> {
   name?: string
   env?: {
     required: string[]
     optional?: string[]
   }
   hooks?: Hooks
+  return?: R
 }
 
 export interface PluginRegistry {
@@ -35,9 +36,12 @@ export const createPluginRegistry = (): PluginRegistry => ({
   hooks: createHooksRegistry()
 })
 
-export type RegisterPluginFn = (plugin: Plugin) => void
+export type RegisterPluginFn = (plugin: Plugin<any>) => any | void
 
-export const registerPlugin = (plugin: Plugin, registry: PluginRegistry) => {
+export const registerPlugin = <R>(
+  plugin: Plugin<R>,
+  registry: PluginRegistry
+): R | void => {
   const name = plugin.name || 'unnamed-plugin'
   appLogger.debug({ msg: 'Registering plugin', meta: { name } })
   registry.names.push(name)
@@ -48,5 +52,10 @@ export const registerPlugin = (plugin: Plugin, registry: PluginRegistry) => {
     plugin.env.required.forEach(env => registerRequiredEnv(env, registry.env))
     plugin.env.optional &&
       plugin.env.optional.forEach(env => registerOptionalEnv(env, registry.env))
+  }
+  if (typeof plugin.return === 'function') {
+    return plugin.return()
+  } else {
+    return plugin.return
   }
 }

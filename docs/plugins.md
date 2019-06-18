@@ -168,3 +168,25 @@ but won't abort the application start if not set (their absence will be
 logged as a warning).
 
 > _Tip: make sure these optional variables are only overrides for a default value implemented in your plugin._
+
+## Return value
+
+Plugins can optionally declare a value to return from `Douze.extend`,
+which can be any type. If it is callable, it will be called at the end of
+plugin registration and the result will be returned instead.
+
+This can be useful for plugins creating middleware that need only to be
+injected in some sub-routes of your app:
+
+```ts
+const customMiddleware = Douze.extend({
+  name: 'custom-middleware'
+  return: () => (req, res, next) => {
+    // custom route-specific middleware logic
+  }
+})
+
+// --
+
+app.use('/api', customMiddleware, apiRoutes)
+```
