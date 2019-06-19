@@ -1,6 +1,4 @@
-require('dotenv').config()
-
-import logger, { Logger, createChildLogger } from './logger'
+import { Logger, createChildLogger, createRootLogger } from './logger'
 import { App } from './defs'
 import createApplication from './app'
 import startApplication from './start'
@@ -10,6 +8,7 @@ import {
   registerPlugin,
   PluginRegistry
 } from './plugin'
+import { setupEnvironment } from './env'
 
 interface Douze {
   extend: RegisterPluginFn
@@ -20,13 +19,15 @@ interface Douze {
   _plugins: PluginRegistry
 }
 
-const createDouzeInstance = (): Douze => {
+const createDouzeInstance = (name?: string): Douze => {
+  const runtimeEnvironment = setupEnvironment()
+  const logger = createRootLogger(runtimeEnvironment, name)
   const _plugins = createPluginRegistry()
   return {
-    extend: plugin => registerPlugin(plugin, _plugins),
-    createApp: () => createApplication(_plugins),
+    extend: plugin => registerPlugin(plugin, _plugins, logger),
+    createApp: () => createApplication(_plugins, logger, runtimeEnvironment),
     start: app => startApplication(app, _plugins),
-    createLogger: createChildLogger,
+    createLogger: category => createChildLogger(logger, category),
     log: logger,
     _plugins
   }

@@ -10,7 +10,7 @@ import {
   registerOptionalEnv,
   EnvRequirementsRegistry
 } from './env'
-import { appLogger } from './app'
+import { Logger } from './logger'
 
 export interface Plugin<R> {
   name?: string
@@ -40,10 +40,13 @@ export type RegisterPluginFn = (plugin: Plugin<any>) => any | void
 
 export const registerPlugin = <R>(
   plugin: Plugin<R>,
-  registry: PluginRegistry
+  registry: PluginRegistry,
+  logger?: Logger
 ): R | void => {
   const name = plugin.name || 'unnamed-plugin'
-  appLogger.debug({ msg: 'Registering plugin', meta: { name } })
+  if (logger) {
+    logger.debug({ msg: 'Registering plugin', meta: { name } })
+  }
   registry.names.push(name)
   if (plugin.hooks) {
     registerHooks(plugin.hooks, registry.hooks, name)

@@ -105,7 +105,7 @@ export default async function start(
   try {
     const { ok, reason } = await plugins.hooks.beforeStart({ app })
     if (!ok) {
-      appLogger.warn({
+      appLogger.fatal({
         msg: 'App startup cancelled by beforeStart hook',
         meta: {
           reason

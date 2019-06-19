@@ -4,16 +4,12 @@ import pino from 'pino'
 import helmet from 'helmet'
 import compression from 'compression'
 import expressPino from 'express-pino-logger'
-import { __DEV__, __PROD__, instanceId, App } from './defs'
-import { createChildLogger } from './logger'
+import { __DEV__, __PROD__, App } from './defs'
+import { Logger, createChildLogger } from './logger'
 import * as gracefulExit from './middleware/gracefulExit'
 import fingerprint from './middleware/fingerprint'
-import { checkEnvironment } from './env'
+import { checkEnvironment, RuntimeEnvironment } from './env'
 import { PluginRegistry } from './plugin'
-
-// --
-
-export const appLogger = createChildLogger('app')
 
 // --
 
@@ -31,9 +27,15 @@ const handleCleverCloudHealthCheck = (
 
 // --
 
-export default function createApplication(plugins: PluginRegistry): App {
+export default function createApplication(
+  plugins: PluginRegistry,
+  logger: Logger,
+  environment: RuntimeEnvironment
+): App {
+  const appLogger = createChildLogger(logger, 'APP')
+
   try {
-    checkEnvironment(appLogger, plugins.env)
+    checkEnvironment(appLogger, plugins.env, environment)
   } catch (error) {
     appLogger.fatal({
       msg: error.message,
@@ -55,13 +57,12 @@ export default function createApplication(plugins: PluginRegistry): App {
     // Setup Sentry error tracking
     // init will automatically find process.env.SENTRY_DSN if set
     const release = process.env.COMMIT_ID
-    const environment = instanceId
-    Sentry.init({ release, environment })
+    Sentry.init({ release, environment: environment.revision })
     appLogger.info({
       msg: 'Sentry is setup for error reporting',
       meta: {
         release,
-        environment
+        environment: environment.instanceId
       }
     })
   }
@@ -90,7 +91,7 @@ export default function createApplication(plugins: PluginRegistry): App {
   app.use(fingerprint(process.env.DOUZE_FINGERPRINT_SALT))
   app.use(
     expressPino({
-      logger: createChildLogger('http'),
+      logger: createChildLogger(logger, 'http'),
       serializers: {
         req: (req: any) => {
           console.log(req.raw.ip, req.raw.ips)
