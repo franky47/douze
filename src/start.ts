@@ -3,9 +3,9 @@ import * as Sentry from '@sentry/node'
 import { __DEV__, App, AppServer } from './defs'
 import errorHandler from './middleware/errorHandler'
 import * as gracefulExit from './middleware/gracefulExit'
-import { appLogger } from './app'
 import { PluginRegistry } from './plugin'
 import { HookError } from './hooks'
+import { Logger } from 'pino'
 
 // --
 
@@ -19,7 +19,8 @@ export const createAppServer = (
 
 const startServer = async (
   app: App,
-  plugins: PluginRegistry
+  plugins: PluginRegistry,
+  logger: Logger
 ): Promise<AppServer> => {
   const host = process.env.HOST || '0.0.0.0'
   const port = process.env.PORT || 3000
@@ -29,7 +30,7 @@ const startServer = async (
 
       // Graceful shutdown handler
       const handleSignal = (signal: NodeJS.Signals) => {
-        appLogger.info({
+        logger.info({
           msg: `${signal} received, shutting down gracefully`,
           meta: { signal }
         })
@@ -40,7 +41,7 @@ const startServer = async (
           exitDelay: 10,
           force: false,
           logger: (message: any) => {
-            appLogger.info({
+            logger.info({
               msg: message,
               meta: { signal }
             })
@@ -50,7 +51,7 @@ const startServer = async (
               plugins.hooks.beforeExit({ app, server: appServer, signal })
             } catch (error) {
               Sentry.captureException(error)
-              appLogger.error({
+              logger.error({
                 msg: error.message,
                 err: error,
                 details: error.errors,
@@ -60,7 +61,7 @@ const startServer = async (
                 }
               })
             }
-            appLogger.info({
+            logger.info({
               msg: 'Bye bye',
               meta: {
                 exitCode,
@@ -89,12 +90,13 @@ const startServer = async (
 
 export default async function start(
   app: App,
-  plugins: PluginRegistry
+  plugins: PluginRegistry,
+  logger: Logger
 ): Promise<boolean> {
   // Final error handler
   app.use(errorHandler())
 
-  appLogger.info({
+  logger.info({
     msg: 'App is starting',
     meta: {
       environment: process.env.NODE_ENV,
@@ -105,7 +107,7 @@ export default async function start(
   try {
     const { ok, reason } = await plugins.hooks.beforeStart({ app })
     if (!ok) {
-      appLogger.fatal({
+      logger.fatal({
         msg: 'App startup cancelled by beforeStart hook',
         meta: {
           reason
@@ -115,7 +117,7 @@ export default async function start(
     }
   } catch (error) {
     Sentry.captureException(error)
-    appLogger.fatal({
+    logger.fatal({
       msg: error.message,
       err: error,
       details: error.errors,
@@ -129,8 +131,8 @@ export default async function start(
 
   let server
   try {
-    server = await startServer(app, plugins)
-    appLogger.info({
+    server = await startServer(app, plugins, logger)
+    logger.info({
       msg: 'App is ready to receive connections',
       meta: {
         host: server.host,
@@ -139,7 +141,7 @@ export default async function start(
     })
   } catch (error) {
     Sentry.captureException(error)
-    appLogger.fatal({ msg: error.message, err: error })
+    logger.fatal({ msg: error.message, err: error })
     return false
   }
 
@@ -147,7 +149,7 @@ export default async function start(
     await plugins.hooks.appReady({ app, server })
   } catch (error) {
     Sentry.captureException(error)
-    appLogger.error({
+    logger.error({
       msg: error.message,
       err: error,
       details: error.errors,

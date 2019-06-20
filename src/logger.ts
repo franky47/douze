@@ -21,7 +21,7 @@ export const createRootLogger = (env: RuntimeEnvironment, name?: string) =>
         : ['req.headers.host', 'req.headers["user-agent"]'])
     ],
     base: {
-      category: 'APP',
+      category: 'app',
       instance: env.instanceId,
       commit: env.revision
     }

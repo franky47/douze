@@ -32,12 +32,10 @@ export default function createApplication(
   logger: Logger,
   environment: RuntimeEnvironment
 ): App {
-  const appLogger = createChildLogger(logger, 'APP')
-
   try {
-    checkEnvironment(appLogger, plugins.env, environment)
+    checkEnvironment(logger, plugins.env, environment)
   } catch (error) {
-    appLogger.fatal({
+    logger.fatal({
       msg: error.message,
       meta: {
         missing: error.missing
@@ -46,7 +44,7 @@ export default function createApplication(
     process.exit(1)
   }
 
-  appLogger.debug({
+  logger.debug({
     msg: 'Loaded plugins',
     meta: {
       plugins: plugins.names
@@ -58,7 +56,7 @@ export default function createApplication(
     // init will automatically find process.env.SENTRY_DSN if set
     const release = process.env.COMMIT_ID
     Sentry.init({ release, environment: environment.revision })
-    appLogger.info({
+    logger.info({
       msg: 'Sentry is setup for error reporting',
       meta: {
         release,
@@ -76,7 +74,7 @@ export default function createApplication(
     plugins.hooks.beforeMiddlewareLoad({ app })
   } catch (error) {
     Sentry.captureException(error)
-    appLogger.fatal({
+    logger.fatal({
       msg: error.message,
       err: error,
       meta: {
@@ -121,7 +119,7 @@ export default function createApplication(
     plugins.hooks.afterMiddlewareLoad({ app })
   } catch (error) {
     Sentry.captureException(error)
-    appLogger.fatal({
+    logger.fatal({
       msg: error.message,
       err: error,
       meta: {

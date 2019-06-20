@@ -26,7 +26,7 @@ const createDouzeInstance = (name?: string): Douze => {
   return {
     extend: plugin => registerPlugin(plugin, _plugins, logger),
     createApp: () => createApplication(_plugins, logger, runtimeEnvironment),
-    start: app => startApplication(app, _plugins),
+    start: app => startApplication(app, _plugins, logger),
     createLogger: category => createChildLogger(logger, category),
     log: logger,
     _plugins
