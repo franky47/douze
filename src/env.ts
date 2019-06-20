@@ -5,7 +5,7 @@ import envAlias, { Alias } from 'env-alias'
 
 export interface RuntimeEnvironment {
   env: NodeJS.ProcessEnv
-  aliases?: Alias[]
+  aliases: Alias[]
   appName: string
   instanceId: string
   revision?: string
@@ -81,9 +81,9 @@ export const checkEnvironment = (
   runtimeEnvironment: RuntimeEnvironment
 ) => {
   // Log aliased environment variables
-  if (runtimeEnvironment.aliases) {
+  if (runtimeEnvironment.aliases.length > 0) {
     logger.debug({
-      message: 'Aliased environment variables',
+      msg: 'Aliased environment variables',
       aliases: runtimeEnvironment.aliases.map(alias => ({
         // Note: be careful not to leak env values in the logs
         source: alias.sourceName,
