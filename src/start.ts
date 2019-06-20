@@ -109,8 +109,9 @@ export default async function start(
     if (!ok) {
       logger.fatal({
         msg: 'App startup cancelled by beforeStart hook',
+        reason,
         meta: {
-          reason
+          plugins: Object.keys(reason)
         }
       })
       return false
