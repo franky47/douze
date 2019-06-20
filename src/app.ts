@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express'
+import express from 'express'
 import * as Sentry from '@sentry/node'
 import pino from 'pino'
 import helmet from 'helmet'
@@ -10,20 +10,6 @@ import * as gracefulExit from './middleware/gracefulExit'
 import fingerprint from './middleware/fingerprint'
 import { checkEnvironment, RuntimeEnvironment } from './env'
 import { PluginRegistry } from './plugin'
-
-// --
-
-const handleCleverCloudHealthCheck = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  if (req.headers['X-CleverCloud-Monitoring'] === 'telegraf') {
-    // https://github.com/influxdata/telegraf/tree/master/plugins/outputs/health
-    return res.sendStatus(200)
-  }
-  return next()
-}
 
 // --
 
@@ -111,9 +97,6 @@ export default function createApplication(
   app.use(gracefulExit.middleware(app))
   app.use(helmet())
   app.use(compression())
-
-  // Auth
-  app.get('/', handleCleverCloudHealthCheck)
 
   try {
     plugins.hooks.afterMiddlewareLoad({ app })
