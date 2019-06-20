@@ -162,7 +162,7 @@ export const createHooksRegistry = (): HooksRegistry => {
     beforeStart: async (
       args: BeforeStartArgs
     ): Promise<{ ok: boolean; reason?: any }> => {
-      return runHooksInParallelCollectErrors(
+      return runHooksInSequenceCollectErrors(
         'beforeStart',
         _storage.beforeStart,
         args,
