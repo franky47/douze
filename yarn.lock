@@ -3831,6 +3831,11 @@ realpath-native@^1.1.0:
   dependencies:
     util.promisify "^1.0.0"
 
+redact-env@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/redact-env/-/redact-env-0.1.0.tgz#807d462c942d48f850daa5fee781519162d73b48"
+  integrity sha512-Oe+HWa8glJF6BLsZm+UKrIstLkUDvN3TEhxRPNJD3Kqx358ZlbUYCH+efh3tP1rnS53J+/N28axxmP6LruFbOw==
+
 referrer-policy@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/referrer-policy/-/referrer-policy-1.2.0.tgz#b99cfb8b57090dc454895ef897a4cc35ef67a98e"

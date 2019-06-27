@@ -5,6 +5,7 @@ import envAlias, { Alias } from 'env-alias'
 
 export interface RuntimeEnvironment {
   env: NodeJS.ProcessEnv
+  secureEnv: string[]
   aliases: Alias[]
   appName: string
   instanceId: string
@@ -13,18 +14,25 @@ export interface RuntimeEnvironment {
 
 // --
 
-export const setupEnvironment = (): RuntimeEnvironment => {
+/**
+ *
+ * @param secureEnv - Name of environment variables to redact in logs
+ */
+export const setupEnvironment = (
+  secureEnv: string[] = []
+): RuntimeEnvironment => {
   dotenv.config()
   const aliases = envAlias({ prefix: 'DOUZE_ENV_ALIAS_' })
   const appName = process.env.APP_NAME || 'douze-app'
   return {
     env: process.env,
+    secureEnv,
     aliases,
     appName,
     revision: process.env.COMMIT_ID,
     instanceId: [
       appName,
-      process.env.INSTANCE_ID || 'dev',
+      process.env.INSTANCE_ID || 'default',
       process.env.INSTANCE_NUMBER || '0'
     ].join('.')
   }

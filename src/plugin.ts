@@ -1,3 +1,5 @@
+import { Logger } from 'pino'
+import Douze from './Douze'
 import {
   createHooksRegistry,
   registerHooks,
@@ -10,7 +12,8 @@ import {
   registerOptionalEnv,
   EnvRequirementsRegistry
 } from './env'
-import { Logger } from './logger'
+
+// --
 
 export interface Plugin<R> {
   name?: string
@@ -28,6 +31,8 @@ export interface PluginRegistry {
   hooks: HooksRegistry
 }
 
+export type PluginFactory<R> = (douze: Douze) => Plugin<R>
+
 // --
 
 export const createPluginRegistry = (): PluginRegistry => ({
@@ -36,7 +41,7 @@ export const createPluginRegistry = (): PluginRegistry => ({
   hooks: createHooksRegistry()
 })
 
-export type RegisterPluginFn = (plugin: Plugin<any>) => any | void
+// --
 
 export const registerPlugin = <R>(
   plugin: Plugin<R>,
@@ -45,16 +50,24 @@ export const registerPlugin = <R>(
 ): R | void => {
   const name = plugin.name || 'unnamed-plugin'
   if (logger) {
-    logger.debug({ msg: 'Registering plugin', meta: { name } })
+    logger.debug({
+      msg: `Registering plugin ${name}`,
+      meta: {
+        name
+      }
+    })
   }
   registry.names.push(name)
   if (plugin.hooks) {
     registerHooks(plugin.hooks, registry.hooks, name)
   }
   if (plugin.env) {
-    plugin.env.required.forEach(env => registerRequiredEnv(env, registry.env))
-    plugin.env.optional &&
-      plugin.env.optional.forEach(env => registerOptionalEnv(env, registry.env))
+    for (const env of plugin.env.required) {
+      registerRequiredEnv(env, registry.env)
+    }
+    for (const env of plugin.env.optional || []) {
+      registerOptionalEnv(env, registry.env)
+    }
   }
   if (typeof plugin.return === 'function') {
     return plugin.return()

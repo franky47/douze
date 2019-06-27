@@ -18,19 +18,10 @@ A [Twelve Factor app](https://12factor.net/) framework for Node.js written in Ty
 
 ### Plugins
 
-- [`douze-sequelize`](https://github.com/franky47/douze-sequelize): Use Sequelize as an ORM
+- [`douze-sequelize`](https://github.com/franky47/douze-sequelize): Use Sequelize as an ORM for SQL databases
 - _`douze-mongo`: MongoDB ODM (coming soon)_
-- _`douze-redis`: Redis cache (coming soon)_
+- _`douze-redis`: Redis cache & KV store (coming soon)_
 - _`douze-graphql`: GraphQL with [Apollo Server 2.0](https://www.apollographql.com/docs/apollo-server/)_ (coming soon)
-
-### Databases
-
-Extend Douze with [`douze-sequelize`](https://github.com/franky47/douze-sequelize) for SQL databases:
-
-- 🐘 PostgreSQL
-- 🐬 MySQL / MariaDB
-- 📄 SQLite
-- 💰 Microsoft SQL Server
 
 ## Installation
 
@@ -46,17 +37,17 @@ $ npm install douze
 // index.ts
 import Douze, { Request, Response } from 'douze'
 
-export default async function main() {
-  // Create an application with default configuration
-  const app = Douze.createApp()
+const douze = new Douze()
 
-  // Attach standard Express routes & middleware to your app:
-  app.use('/', (req: Request, res: Response) => {
-    res.json({ hello: 'world' })
-  })
+// Create an application with default configuration
+const app = douze.createApp()
 
-  await Douze.start(app)
-}
+// Attach standard Express routes & middleware to your app:
+app.use('/', (req: Request, res: Response) => {
+  res.json({ hello: 'world' })
+})
+
+await douze.start(app)
 ```
 
 This basic example shows sensible default configuration, overridable by environment

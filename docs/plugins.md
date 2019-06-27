@@ -9,7 +9,7 @@ is even created (crash early policy).
 Plugins are registered with Douze using the `extend` method:
 
 ```ts
-Douze.extend({
+douze.extend({
   name: 'myPlugin'
 })
 ```
@@ -32,12 +32,12 @@ The following hooks are available:
 
 ### `beforeMiddlewareLoad`
 
-Called before Douze starts loading middleware in `Douze.createApp`.
+Called before Douze starts loading middleware in `douze.createApp`.
 You can inject your own middleware here, the Express app is passed in the
 object argument:
 
 ```ts
-Douze.extend({
+douze.extend({
   hooks: {
     beforeMiddlewareLoad: ({ app }) => {
       app.use((req, res, next) => {
@@ -52,7 +52,7 @@ This hook is called synchronously and in a sequence given by the order of
 plugin registration with `extend`.
 
 Any error thrown in the hook will be logged and thrown back from
-`Douze.createApp`.
+`douze.createApp`.
 
 ### `afterMiddlewareLoad`
 
@@ -62,7 +62,7 @@ has loaded its own middleware.
 As an application developer, you should probably not need to use this,
 as the Express application is returned to you right after invoking this
 hook, so you can setup your own middleware and routes after the call
-to `Douze.createApp`. This hook will be useful for plugin developers who
+to `douze.createApp`. This hook will be useful for plugin developers who
 want to add custom middleware and routes to your app before yours
 (but after Douze's).
 
@@ -87,7 +87,7 @@ users of your plugin troubleshoot issues.
 Example:
 
 ```ts
-Douze.extend({
+douze.extend({
   name: 'beforeStart-demo',
   hooks: {
     beforeStart: async ({ app }) => {
@@ -147,7 +147,7 @@ A plugin can declare it requires some environment variables to be set to
 work:
 
 ```ts
-Douze.extend({
+douze.extend({
   name: 'can I haz env ?',
   env: {
     required: ['API_TOKEN', 'OAUTH_SECRET', 'JWT_SECRET_KEY']
@@ -156,7 +156,7 @@ Douze.extend({
 ```
 
 Environment validation is the first thing done when calling
-`Douze.createApp`, and will log and throw an error if some of the
+`douze.createApp`, and will log and throw an error if some of the
 required environment variables are not set:
 
 ```
@@ -171,7 +171,7 @@ logged as a warning).
 
 ## Return value
 
-Plugins can optionally declare a value to return from `Douze.extend`,
+Plugins can optionally declare a value to return from `douze.extend`,
 which can be any type. If it is callable, it will be called at the end of
 plugin registration and the result will be returned instead.
 
@@ -179,7 +179,7 @@ This can be useful for plugins creating middleware that need only to be
 injected in some sub-routes of your app:
 
 ```ts
-const customMiddleware = Douze.extend({
+const customMiddleware = douze.extend({
   name: 'custom-middleware'
   return: () => (req, res, next) => {
     // custom route-specific middleware logic

@@ -1,11 +1,11 @@
 import express from 'express'
 import * as Sentry from '@sentry/node'
-import pino from 'pino'
+import pino, { Logger } from 'pino'
 import helmet from 'helmet'
 import compression from 'compression'
 import expressPino from 'express-pino-logger'
 import { __DEV__, __PROD__, App } from './defs'
-import { Logger, createChildLogger } from './logger'
+import { createChildLogger } from './logger'
 import * as gracefulExit from './middleware/gracefulExit'
 import fingerprint from './middleware/fingerprint'
 import { checkEnvironment, RuntimeEnvironment } from './env'
@@ -78,6 +78,7 @@ export default function createApplication(
       logger: createChildLogger(logger, 'http'),
       serializers: {
         req: (req: any) => {
+          // todo: Remove this
           console.log(req.raw.ip, req.raw.ips)
           return {
             // Somehow this drops remoteAddress and remotePort as a side-effect..
