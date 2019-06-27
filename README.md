@@ -13,6 +13,8 @@ A [Twelve Factor app](https://12factor.net/) framework for Node.js written in Ty
 - 🌲 Logging with [Pino](https://getpino.io)
 - 🚨 Error reporting with [Sentry](https://sentry.io)
 - 📦 Extensible with plugins (batteries included, but opt-in)
+- 🌍 Configuration via environment variables
+- 🛠️ Admin processes through [Tasks](./docs/tasks)
 
 ### Plugins
 

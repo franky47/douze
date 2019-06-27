@@ -12,3 +12,5 @@ export interface AppServer extends Server {
   host: string
   port: number | string
 }
+
+export type Metadata = { [key: string]: any }
