@@ -45,10 +45,19 @@ douze.registerTask('task-name', async ({ douze, app }: TaskArgs) => {
 // package.json
 {
   "douze": {
-    "app": "./src/app.ts"
+    "app": "./dist/app.js"
   }
 }
 ```
+
+<!--
+
+Note: Passing the path to the .ts file is good for development, not so much for
+production, where the files are moved to the build directory.
+
+For now, it would be simpler to target production only and require Node.js
+files.
+-->
 
 `src/app.ts` will export as `default` a function that creates the
 application stack used for both the HTTP server and running tasks:
