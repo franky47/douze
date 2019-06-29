@@ -15,7 +15,7 @@ import {
 
 // --
 
-export interface Plugin<R> {
+export interface Plugin<R = void> {
   name?: string
   env?: {
     required: string[]
