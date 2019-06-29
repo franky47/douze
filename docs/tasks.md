@@ -9,99 +9,55 @@
 Tasks are the [admin processes](https://12factor.net/admin-processes)
 mentioned in the Twelve Factor App.
 
-By default, Douze has only one default process, which runs an HTTP web
-server.
+Douze apps are single-process applications with a built-in CLI. Running your
+app without any arguments or configuration will start the HTTP web server,
+but other tasks can be invoked in your app:
 
-Tasks are mini-CLI executables that are a part of the application bundle,
-built and shipped along with it, and that can be invoked simply by running
-them. They are bootstrapped with your application stack, but they run code
-that you define, rather than start an HTTP server.
+```zsh
+$ node my-app # => starts the HTTP server
+$ node my-app run db:init # run task db:init
+```
+
+Tasks are functions that are executed instead of starting the HTTP server:
+
+```ts
+import Douze from 'douze'
+
+const douze = new Douze()
+
+douze.registerTask('my-task', async ({ app }) => {
+  // Do stuff here
+})
+```
+
+```zsh
+# Run it from your app's main entrypoint:
+$ node my-app run my-task
+```
 
 Plugins can define tasks for you. For example
 [`douze-sequelize`](https://github.com/franky47/douze-sequelize)
 will define admin tasks to manage a database so a minimal amount of code
 is required on your part to get started.
 
-## Defining tasks
-
-Tasks can be added to an application by:
-
-1. Registering them with your douze instance:
+## Bootstrapping tasks
 
 ```ts
-import Douze, { TaskArgs } from 'douze'
-
-const douze = new Douze()
-
-douze.registerTask('task-name', async ({ douze, app }: TaskArgs) => {
-  // Do whatever you need with
-  douze.logger.info('Hello from task-name')
-})
-```
-
-2. Telling Douze where to find your app bootstrap code:
-
-```json
-// package.json
-{
-  "douze": {
-    "app": "./dist/app.js"
-  }
-}
-```
-
-<!--
-
-Note: Passing the path to the .ts file is good for development, not so much for
-production, where the files are moved to the build directory.
-
-For now, it would be simpler to target production only and require Node.js
-files.
--->
-
-`src/app.ts` will export as `default` a function that creates the
-application stack used for both the HTTP server and running tasks:
-
-```ts
-// src/app.ts
 import Douze from 'douze'
 
 const douze = new Douze()
 
-// Register plugins and tasks here
-
-export default function createApp() {
+const createApp = () => {
   const app = douze.createApp()
 
-  // Configure app stack here
+  // Setup the app here
 
   return app
 }
-```
 
-## Running tasks
-
-The Douze CLI provides a way to invoke tasks:
-
-```zsh
-# Shorthand
-$ douze task-name
-
-# The longer version
-$ douze run task-name
-```
-
-Tasks can also be invoked from within the app:
-
-```ts
-douze.invokeTask('task-name', app)
-```
-
-## Task orchestration
-
-Tasks may have to run in a specific order to be successful. We recommend
-you use the Unix way of running processes in sequence to do it simply:
-
-```zsh
-$ douze db:init && douze db:migrate && douze db:seed && douze start
+if (require.main === module) {
+  // Calling douze.run will parse the CLI arguments
+  // and handle task invokation for you:
+  douze.run(createApp)
+}
 ```

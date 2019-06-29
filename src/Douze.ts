@@ -1,5 +1,5 @@
 import { Logger } from 'pino'
-import { App, Metadata } from './defs'
+import { App, AppFactory, Metadata } from './defs'
 import { createRootLogger, createChildLogger } from './logger'
 import { setupEnvironment, RuntimeEnvironment } from './env'
 import {
@@ -19,6 +19,7 @@ import {
 } from './tasks'
 import createApplication from './app'
 import startApplication from './start'
+import cliMain from './cli/main'
 
 // --
 
@@ -39,6 +40,22 @@ export default class Douze {
     this.logger = createRootLogger(this.env, redactFields, secureEnvNames)
     this.plugins = createPluginRegistry()
     this.tasks = createTaskRegistry()
+  }
+
+  // CLI --
+
+  /**
+   * Main entrypoint for your application.
+   *
+   * It handles both starting the HTTP server (default behaviour) or
+   * invoking tasks (admin processes).
+   *
+   * Call this in a `if (require.main === module) {}` block to make sure
+   * it runs only when called from the command-line and not required
+   * from another script.
+   */
+  public static async main<T>(appFactory: AppFactory<T>) {
+    return cliMain(appFactory)
   }
 
   // App --

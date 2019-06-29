@@ -1,27 +1,23 @@
 #!/usr/bin/env node
 import program from 'commander'
 import readPkg from 'read-pkg'
-import { douzeRoot } from './paths'
+import { AppFactory } from '../defs'
+import { douzeRoot, appRoot } from './paths'
+import defineStartCommand, { start } from './commands/start'
 import defineRunCommand from './commands/run'
 import defineListCommand from './commands/list'
 
-const readArguments = async () => {
+export default async function main<T>(createApp: AppFactory<T>) {
   const pkg = await readPkg({ cwd: douzeRoot })
+  const app = await readPkg({ cwd: appRoot })
   program
-    .name(pkg.name!)
-    .version(pkg.version!)
-    .description('CLI for Douze')
+    .name(app.name!)
+    .version(`${app.name} ${app.version} - Douze CLI ${pkg.version}`)
+    .description(app.description!)
 
-  defineRunCommand(program)
-  defineListCommand(program)
+  defineStartCommand(program, createApp)
+  defineRunCommand(program, createApp)
+  defineListCommand(program, createApp)
 
   program.parse(process.argv)
-}
-
-async function main() {
-  readArguments()
-}
-
-if (require.main === module) {
-  main()
 }
