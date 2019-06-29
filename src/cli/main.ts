@@ -3,7 +3,7 @@ import program from 'commander'
 import readPkg from 'read-pkg'
 import { AppFactory } from '../defs'
 import { douzeRoot, appRoot } from './paths'
-import defineStartCommand, { start } from './commands/start'
+import defineStartCommand from './commands/start'
 import defineRunCommand from './commands/run'
 import defineListCommand from './commands/list'
 
