@@ -88,8 +88,8 @@ const startServer = async (
 
 // --
 
-export default async function start(
-  app: App,
+export default async function start<T>(
+  app: App<T>,
   plugins: PluginRegistry,
   logger: Logger
 ): Promise<boolean> {

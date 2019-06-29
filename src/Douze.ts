@@ -46,8 +46,8 @@ export default class Douze {
   /**
    * createApp
    */
-  public createApp() {
-    const app = createApplication(this.plugins, this.logger, this.env)
+  public createApp<T>() {
+    const app = createApplication<T>(this.plugins, this.logger, this.env)
     // Store context in app local storage:
     app.locals._douze = this
     app.locals.logger = this.logger
@@ -58,9 +58,11 @@ export default class Douze {
   /**
    * Start the application HTTP server.
    */
-  public async start(app: App) {
+  public async start<T>(app: App<T>) {
     if (app.locals._douze !== this) {
-      // Error: not started from the right instance
+      throw new Error(
+        'This application was not created with this Douze instance'
+      )
     }
     return startApplication(app, this.plugins, this.logger)
   }

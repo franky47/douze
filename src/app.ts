@@ -13,11 +13,11 @@ import { PluginRegistry } from './plugin'
 
 // --
 
-export default function createApplication(
+export default function createApplication<T>(
   plugins: PluginRegistry,
   logger: Logger,
   environment: RuntimeEnvironment
-): App {
+): App<Partial<T>> {
   try {
     checkEnvironment(logger, plugins.env, environment)
   } catch (error) {
