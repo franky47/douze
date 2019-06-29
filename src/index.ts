@@ -14,3 +14,4 @@ export {
   BeforeExitArgs,
   BeforeStartResult
 } from './hooks'
+export { TaskArgs, TaskCallback } from './tasks'

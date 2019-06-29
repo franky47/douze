@@ -2,26 +2,29 @@ import { App, AppServer } from './defs'
 
 // --
 
-export interface MiddlewareLoadArgs {
-  app: App
+export interface MiddlewareLoadArgs<T> {
+  // App local storage can be registered during middleware load (pre/post),
+  // so at this time the presence of T cannot be enforced in these hooks.
+  // Other hooks in the lifecycle of the application will use final locals.
+  app: App<Partial<T>>
 }
 
-export interface BeforeStartArgs {
-  app: App
+export interface BeforeStartArgs<T> {
+  app: App<T>
 }
 
-export interface AppReadyArgs {
-  app: App
+export interface AppReadyArgs<T> {
+  app: App<T>
   server: AppServer
 }
 
-export interface BeforeExitArgs {
-  app: App
+export interface BeforeExitArgs<T> {
+  app: App<T>
   server: AppServer
   signal: string
 }
 
-export type Hooks = Partial<AllHooks>
+export type Hooks<T = {}> = Partial<AllHooks<T>>
 
 export interface BeforeStartResult {
   ok: boolean
@@ -30,12 +33,12 @@ export interface BeforeStartResult {
 
 // --
 
-interface AllHooks {
-  beforeMiddlewareLoad: (args: MiddlewareLoadArgs) => void
-  afterMiddlewareLoad: (args: MiddlewareLoadArgs) => void
-  beforeStart: (args: BeforeStartArgs) => Promise<BeforeStartResult>
-  appReady: (args: AppReadyArgs) => Promise<void>
-  beforeExit: (args: BeforeExitArgs) => Promise<void>
+interface AllHooks<T> {
+  beforeMiddlewareLoad: (args: MiddlewareLoadArgs<T>) => void
+  afterMiddlewareLoad: (args: MiddlewareLoadArgs<T>) => void
+  beforeStart: (args: BeforeStartArgs<T>) => Promise<BeforeStartResult>
+  appReady: (args: AppReadyArgs<T>) => Promise<void>
+  beforeExit: (args: BeforeExitArgs<T>) => Promise<void>
 }
 
 type HookCell<T> = {
@@ -43,11 +46,11 @@ type HookCell<T> = {
   hook: T
 }
 
-type AsyncHook<A, R> = (args: A) => Promise<R>
+type AsyncFn<A, R> = (args: A) => Promise<R>
 
-type HooksStorage = { [K in keyof AllHooks]: HookCell<AllHooks[K]>[] }
+type HooksStorage = { [K in keyof AllHooks<any>]: HookCell<AllHooks<any>[K]>[] }
 
-export interface HooksRegistry extends AllHooks {
+export interface HooksRegistry extends AllHooks<any> {
   _storage: HooksStorage
 }
 
@@ -83,7 +86,7 @@ export class HookErrors extends Error {
 
 export const runHooksInSequenceCollectErrors = async <Args, Return>(
   hookName: string,
-  store: HookCell<AsyncHook<Args, Return>>[],
+  store: HookCell<AsyncFn<Args, Return>>[],
   args: Args,
   reducer: (results: Map<string, Return>) => Return
 ): Promise<Return> => {
@@ -109,7 +112,7 @@ export const runHooksInSequenceCollectErrors = async <Args, Return>(
 
 export const runHooksInParallelCollectErrors = async <Args, Return>(
   hookName: string,
-  store: HookCell<AsyncHook<Args, Return>>[],
+  store: HookCell<AsyncFn<Args, Return>>[],
   args: Args,
   reducer: (results: Map<string, Return>) => Return
 ): Promise<Return> => {
@@ -141,7 +144,7 @@ export const createHooksRegistry = (): HooksRegistry => {
   }
   return {
     _storage,
-    beforeMiddlewareLoad: (args: MiddlewareLoadArgs) => {
+    beforeMiddlewareLoad: <T>(args: MiddlewareLoadArgs<T>) => {
       _storage.beforeMiddlewareLoad.forEach(({ name, hook }) => {
         try {
           hook(args)
@@ -150,7 +153,7 @@ export const createHooksRegistry = (): HooksRegistry => {
         }
       })
     },
-    afterMiddlewareLoad: (args: MiddlewareLoadArgs) => {
+    afterMiddlewareLoad: <T>(args: MiddlewareLoadArgs<T>) => {
       _storage.afterMiddlewareLoad.forEach(({ name, hook }) => {
         try {
           hook(args)
@@ -159,9 +162,9 @@ export const createHooksRegistry = (): HooksRegistry => {
         }
       })
     },
-    beforeStart: async (
-      args: BeforeStartArgs
-    ): Promise<{ ok: boolean; reason?: any }> => {
+    beforeStart: async <T>(
+      args: BeforeStartArgs<T>
+    ): Promise<BeforeStartResult> => {
       return runHooksInSequenceCollectErrors(
         'beforeStart',
         _storage.beforeStart,
@@ -187,7 +190,7 @@ export const createHooksRegistry = (): HooksRegistry => {
         }
       )
     },
-    appReady: async (args: AppReadyArgs): Promise<void> => {
+    appReady: async <T>(args: AppReadyArgs<T>): Promise<void> => {
       return runHooksInParallelCollectErrors(
         'appReady',
         _storage.appReady,
@@ -195,7 +198,7 @@ export const createHooksRegistry = (): HooksRegistry => {
         () => {}
       )
     },
-    beforeExit: async (args: BeforeExitArgs): Promise<void> => {
+    beforeExit: async <T>(args: BeforeExitArgs<T>): Promise<void> => {
       return runHooksInSequenceCollectErrors(
         'beforeExit',
         _storage.beforeExit,
@@ -208,8 +211,8 @@ export const createHooksRegistry = (): HooksRegistry => {
 
 // --
 
-export const registerHooks = (
-  hooks: Hooks,
+export const registerHooks = <T>(
+  hooks: Hooks<T>,
   registry: HooksRegistry,
   name: string
 ) => {

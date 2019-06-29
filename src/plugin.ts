@@ -15,13 +15,13 @@ import {
 
 // --
 
-export interface Plugin<R = void> {
+export interface Plugin<T = {}, R = void> {
   name?: string
   env?: {
     required: string[]
     optional?: string[]
   }
-  hooks?: Hooks
+  hooks?: Hooks<T>
   return?: R
 }
 
@@ -31,7 +31,7 @@ export interface PluginRegistry {
   hooks: HooksRegistry
 }
 
-export type PluginFactory<R> = (douze: Douze) => Plugin<R>
+export type PluginFactory<T, R> = (douze: Douze) => Plugin<T, R>
 
 // --
 
@@ -43,8 +43,8 @@ export const createPluginRegistry = (): PluginRegistry => ({
 
 // --
 
-export const registerPlugin = <R>(
-  plugin: Plugin<R>,
+export const registerPlugin = <T, R>(
+  plugin: Plugin<T, R>,
   registry: PluginRegistry,
   logger?: Logger
 ): R | void => {

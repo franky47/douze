@@ -1,5 +1,5 @@
 import { CommanderStatic } from 'commander'
-import Douze, { AppFactory } from '../../index'
+import { AppFactory } from '../../index'
 
 // --
 
@@ -10,7 +10,7 @@ export default async function defineCommand<T>(
   const exec = async (taskName: string) => {
     try {
       const app = await createApp()
-      const douze: Douze = app.locals._douze
+      const douze = app.locals._douze
       return douze.invokeTask(taskName, app)
     } catch (error) {
       console.error(`Failed to run task ${taskName}: ${error.message}`)

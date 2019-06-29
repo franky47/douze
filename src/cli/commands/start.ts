@@ -1,12 +1,12 @@
 import { CommanderStatic } from 'commander'
-import Douze, { AppFactory } from '../../index'
+import { AppFactory } from '../../index'
 
 // --
 
 export const start = <T>(createApp: AppFactory<T>) => async () => {
   try {
     const app = await createApp()
-    const douze: Douze = app.locals._douze
+    const douze = app.locals._douze
     await douze.start(app)
   } catch (error) {
     // todo: Handle error

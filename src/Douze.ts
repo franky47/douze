@@ -15,7 +15,8 @@ import {
   invokeTask,
   listTasks,
   TaskCallback,
-  TaskRegistry
+  TaskRegistry,
+  TaskArgs
 } from './tasks'
 import createApplication from './app'
 import startApplication from './start'
@@ -93,7 +94,7 @@ export default class Douze {
    * Use a function to get access to the Douze instance, to register tasks
    * for example.
    */
-  public extend<R>(input: Plugin<R> | PluginFactory<R>) {
+  public extend<T, R>(input: Plugin<T, R> | PluginFactory<T, R>) {
     const plugin = typeof input === 'function' ? input(this) : input
     return registerPlugin(plugin, this.plugins, this.logger)
   }
@@ -103,18 +104,22 @@ export default class Douze {
   /**
    * registerTask
    */
-  public registerTask(name: string, task: TaskCallback, meta: Metadata = {}) {
+  public registerTask<T>(
+    name: string,
+    task: TaskCallback<T>,
+    meta: Metadata = {}
+  ) {
     return registerTask(name, task, this.tasks, this.logger, meta)
   }
 
   /**
    * invokeTask
    */
-  public invokeTask(name: string, app: App) {
+  public invokeTask<T>(name: string, app: App<T>) {
     if (app.locals._douze !== this) {
       // Error: not started from the right instance
     }
-    const args = {
+    const args: TaskArgs<T> = {
       douze: this,
       app
     }

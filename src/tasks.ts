@@ -2,14 +2,14 @@ import { Logger } from 'pino'
 import Douze from './Douze'
 import { App, Metadata } from './defs'
 
-export interface TaskArgs {
+export interface TaskArgs<T = {}> {
   douze: Douze
-  app: App
+  app: App<T>
 }
 
-export type TaskCallback = (args: TaskArgs) => Promise<any>
+export type TaskCallback<T> = (args: TaskArgs<T>) => Promise<any>
 
-export type TaskRegistry = Map<string, TaskCallback>
+export type TaskRegistry = Map<string, TaskCallback<any>>
 
 // --
 
@@ -17,9 +17,9 @@ export const createTaskRegistry = (): TaskRegistry => new Map()
 
 // --
 
-export const registerTask = (
+export const registerTask = <T>(
   name: string,
-  callback: TaskCallback,
+  callback: TaskCallback<T>,
   registry: TaskRegistry,
   logger?: Logger,
   meta: Metadata = {}
@@ -35,9 +35,9 @@ export const registerTask = (
 
 // --
 
-export const invokeTask = async (
+export const invokeTask = async <T>(
   name: string,
-  args: TaskArgs,
+  args: TaskArgs<T>,
   registry: TaskRegistry
 ): Promise<any> => {
   if (!registry.has(name)) {
