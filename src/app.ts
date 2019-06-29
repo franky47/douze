@@ -78,8 +78,6 @@ export default function createApplication<T>(
       logger: createChildLogger(logger, 'http'),
       serializers: {
         req: (req: any) => {
-          // todo: Remove this
-          console.log(req.raw.ip, req.raw.ips)
           return {
             // Somehow this drops remoteAddress and remotePort as a side-effect..
             fingerprint: req.raw.fingerprint,
