@@ -12,12 +12,15 @@ export default async function main<T>(createApp: AppFactory<T>) {
   const app = await readPkg({ cwd: appRoot })
   program
     .name(app.name!)
-    .version(`${app.name} ${app.version} - Douze CLI ${pkg.version}`)
+    .version(
+      `${app.name} ${app.version} - Douze CLI ${pkg.version}`,
+      '-v, --version'
+    )
     .description(app.description!)
 
-  defineStartCommand(program, createApp)
-  defineRunCommand(program, createApp)
-  defineListCommand(program, createApp)
+  await defineStartCommand(program, createApp)
+  await defineListCommand(program, createApp)
+  await defineRunCommand(program, createApp)
 
   program.parse(process.argv)
 }
