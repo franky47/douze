@@ -26,7 +26,10 @@ export const createRootLogger = (
 ) => {
   return pino(
     {
-      level: process.env.LOG_LEVEL || (__DEV__ ? 'debug' : 'info'),
+      level:
+        process.env.DOUZE_SILENT === 'true'
+          ? 'silent'
+          : process.env.LOG_LEVEL || (__DEV__ ? 'debug' : 'info'),
       redact: [
         // Security redactions
         'req.headers["x-secret-token"]',
