@@ -11,7 +11,7 @@ export default async function defineCommand<T>(
     try {
       const app = await createApp()
       const douze = app.locals._douze
-      return douze.invokeTask(taskName, app)
+      return await douze.invokeTask(taskName, app)
     } catch (error) {
       console.error(`Failed to run task ${taskName}: ${error.message}`)
     }

@@ -3,13 +3,14 @@ import { AppFactory } from '../../index'
 
 // --
 
-export const start = <T>(createApp: AppFactory<T>) => async () => {
+export const start = async <T>(createApp: AppFactory<T>) => {
   try {
     const app = await createApp()
     const douze = app.locals._douze
     await douze.start(app)
   } catch (error) {
     // todo: Handle error
+    return
   }
 }
 
@@ -20,5 +21,5 @@ export default async function defineCommand<T>(
   program
     .command('start')
     .description('Start the HTTP server')
-    .action(start(createApp))
+    .action(async () => await start(createApp))
 }
