@@ -545,9 +545,9 @@
   integrity sha512-l42BggppR6zLmpfU6fq9HEa2oGPEI8yrSPL3GITjfRInppYFahObbIQOQK3UGxEnyQpltZLaPe75046NOZQikw==
 
 "@types/validator@^10.11.1":
-  version "10.11.1"
-  resolved "https://registry.yarnpkg.com/@types/validator/-/validator-10.11.1.tgz#76e983ce155261838463b73728856cf8bc628d53"
-  integrity sha512-bVhLqvb+5xUNWRFnuuecRVISTvsG6AdhrB2kb/tChgtuTTqARqlQ3rLhOPy8cINZEUB8PkR+goyWF6fWxg4iSw==
+  version "10.11.3"
+  resolved "https://registry.yarnpkg.com/@types/validator/-/validator-10.11.3.tgz#945799bef24a953c5bc02011ca8ad79331a3ef25"
+  integrity sha512-GKF2VnEkMmEeEGvoo03ocrP9ySMuX1ypKazIYMlsjfslfBMhOAtC5dmEWKdJioW4lJN7MZRS88kalTsVClyQ9w==
 
 "@types/yargs-parser@*":
   version "13.0.0"
