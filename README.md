@@ -1,5 +1,11 @@
 # `Douze`
 
+## ⚰️ End-of-life disclaimer
+
+This project was a test and will disappear soon. You may fork it or do whatever you want with it.
+
+---
+
 [![MIT License](https://img.shields.io/github/license/franky47/douze.svg?color=blue)](https://github.com/franky47/douze/blob/master/LICENSE)
 [![Travis CI Build](https://img.shields.io/travis/com/franky47/douze.svg)](https://travis-ci.com/franky47/douze)
 [![Average issue resolution time](https://isitmaintained.com/badge/resolution/franky47/douze.svg)](https://isitmaintained.com/project/franky47/douze)
