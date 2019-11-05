@@ -19,7 +19,7 @@ const defaultOptions: GracefulExitOptions = {
   callback: () => {}
 }
 
-let hardExitTimer: NodeJS.Timeout | undefined
+let hardExitTimer: number | undefined
 let connectionsClosed = false
 
 // --
